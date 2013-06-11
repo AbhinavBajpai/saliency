@@ -230,10 +230,11 @@ ptpairs ORCore::outlierRejection(ptpairs inP){
 
 void ORCore::filter()
 {
-	if(database.empty()){
+
+	if(NMinusOneVec.size() < 1){
 		//fill database
-		database = saliency_poses_vec;
-		database_all = saliency_poses_vec;
+		//database = saliency_poses_vec;
+		//database_all = saliency_poses_vec;
 		NMinusOneVec = NVec;
 		SDB.push_back(NVec);
 		ptpair py;
@@ -248,7 +249,6 @@ void ORCore::filter()
 		SDB.ptpars.push_back(pyVec);
 	}else{
 		//nearest neighbour
-		
 
 		ptpairs outPa = nearestNeighbour();
 
@@ -266,10 +266,6 @@ void ORCore::filter()
 
 		//move database
 
-		for(int i=0; i<outP.size(); i++){
-			ROS_INFO("i=%i, j=%i, frame=%i",i ,outP.atJ(i),outP.atFrame(i));
-		}		
-
 
 		NMinusOneVec = NVec;
 		ptpairs ptVec;
@@ -280,17 +276,18 @@ void ORCore::filter()
 			ppp.j = pi.j;
 			ppp.d = outP.atD(uu); 
 			ppp.frame = pi.frame;
+			ROS_INFO("i=%i, j=%i, frame=%i",uu ,ppp.j,ppp.frame);
 			ptVec.push_back(ppp);	
-
 		}
 
+		
+		//file away
 		SDB.ptpars.push_back(ptVec);
 		SDB.push_back(NVec);
 
-		// ptpairs_local -> ptpairs_global
-
-		database = saliency_poses_vec;
 		//push  to publish
+		std::vector <SURFPoint> outDB;
+		
 	}	
 }
 

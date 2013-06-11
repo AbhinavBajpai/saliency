@@ -4,6 +4,7 @@
 #include <vector>
 #include "RoverState.h"
 #include "SALPoint.h"
+#include "SURFPoint.h"
 #include "ptpairs.h"
 #include "SALPointVec.h"
 #include<ctime>
@@ -39,7 +40,24 @@ class SALPointDB{
 		}
 
 		//TODO Eventually conversion stuff HERE
+		/*
+		int upto;
+		std::vector <SURFPoint> converted;
+		std::vector <int> ptpairConverted;
+		std::vector <SURFPoint> convert(){
+			if(SALdata.size()>upto){
+				for(int i=0; i<SALdata.size()-upto;i++){
+				//convert
+					SALPointVec t = SALdata[SALdata.size()-1-i];
+					//for(){
 
+					//}
+				}
+				upto = SALdata.size();
+			}
+			return converted;
+		}
+		*/
 
 };
 
