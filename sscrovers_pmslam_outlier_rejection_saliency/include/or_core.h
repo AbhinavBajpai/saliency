@@ -126,6 +126,7 @@ private:
   ros::Publisher db_pub_;
   void publishDB();
   ptpairs nearestNeighbour();
+  ptpairs nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in);
   ptpairs outlierRejection(ptpairs inP);
   pairInts resolve(ptpair p);
 

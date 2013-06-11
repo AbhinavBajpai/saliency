@@ -71,10 +71,9 @@ class ptpairs{
 			int i = pairs.size();
 			bool test = true;
 			for (int w=0; w<i; w++){
-				if (pairs.at(w).j == jIn){
-					ROS_INFO("w= %i; j: %i == %i ", w, pairs.at(w).j, jIn);
+				if (pairs.at(w).j == jIn  && pairs.atFrame(w) == frameIn){
 					if(pairs.at(w).d > dIn){
-						ROS_INFO("closer");
+
 						ptpair p;
 						p.i = i;
 						p.j = jIn;
@@ -85,7 +84,7 @@ class ptpairs{
 						pairs[w].j = w;
 						pairs[w].frame = 0;
 					}else{
-						ROS_INFO("further");
+
 						ptpair p;
 						p.i = i;
 						p.j = i;

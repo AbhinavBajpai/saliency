@@ -40,7 +40,7 @@ struct saliency_poses {
 struct pairInts{
 	int j;
 	int frame;
-}
+};
 
 
 using std::string;

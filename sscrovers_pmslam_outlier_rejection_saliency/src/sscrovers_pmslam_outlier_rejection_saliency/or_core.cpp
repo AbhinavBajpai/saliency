@@ -161,13 +161,43 @@ ptpairs ORCore::nearestNeighbour(){
 	return ptpairs_local;
 }
 
+
+ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
+	ROS_INFO("NN2 begin");
+	int closest;
+	ptpairs ptpairs_local;
+	float dmin;	
+	float d, area, areaMO;
+	for(int i = 0; i<N.size(); i++){
+		dmin=10000;
+		closest=i;
+		if(in.atFrame(i)==0){
+			for(int j=0; j<NM2.size(); j++){
+				d = NM2.at(j).dist(N.at(i));
+				area = N.at(i).height * N.at(i).width;
+				areaMO = NM2.at(j).width * NM2.at(j).height;
+				if(d<dmin && area < 4*areaMO && 4 * area > areaMO){
+					dmin=d;
+					closest = j;
+				}
+			}
+			ptpairs_local.add(closest,dmin,-2);
+		}else{
+			dmin = in.atD(i);
+			closest = in.atJ(i);
+			ptpairs_local.add(closest,dmin,in.atFrame(i));
+		}
+
+	}
+	ROS_INFO("NN2 End");
+	return ptpairs_local;
+}
+
 ptpairs ORCore::outlierRejection(ptpairs inP){
 	vector<cv::Point2f> points1, points2;
 	cv::Point2f pTemp;
-	ROS_INFO("Outlier Rejection begin, %i", inP.size());
-	for(int i = 0; i<inP.size(); i++){
-		ROS_INFO("Before j = %i, frame= %i",inP.atJ(i), inP.atFrame(i));
-	}
+	ROS_INFO("Outlier Rejection begin");
+	
 	std::vector <int> lis;
 	for(int i = 0; i<inP.size(); i++){
 		if(inP.pairs[i].frame == -1){
@@ -183,18 +213,15 @@ ptpairs ORCore::outlierRejection(ptpairs inP){
 	vector<uchar> outliers;
 	vector<cv::Point2f> points1_temp, points2_temp;
 	Mat F = findFundamentalMat_local(Mat(points1), Mat(points2), FM_RANSAC, 1, 0.99, &outliers);
-ROS_INFO("sad");
 	for(int u=0; u<outliers.size(); u++){
 		if (outliers[u] == 1){
-ROS_INFO("Outlier %i, %i", u, lis[u]);
+
 			inP.pairs[lis[u]].j = lis[u];
 			inP.pairs[lis[u]].d = 0;
 			inP.pairs[lis[u]].frame = 0;
 		}	
 	}
-	for(int i = 0; i<inP.size(); i++){
-		ROS_INFO("afterj = %i, frame= %i",inP.atJ(i), inP.atFrame(i));
-	}
+	
 	ROS_INFO("Outlier Rejection end");
 	return inP;
 }
@@ -221,85 +248,29 @@ void ORCore::filter()
 		SDB.ptpars.push_back(pyVec);
 	}else{
 		//nearest neighbour
-		//for each
-		/*
-		int closest = -1;
-		vector<int> ptpairTemp, ptpairsNew;
-		float dmin =10000;	
-		float d;
-		for(int i = 0; i<database.size(); i++){
-			dmin=10000;
-			closest=-1;
-			for(int j=0; j<saliency_poses_vec.size(); j++){
-				d = (database[i].centroid_x- saliency_poses_vec[j].centroid_x)*(database[i].centroid_x- saliency_poses_vec[j].centroid_x) + (database[i].centroid_y- saliency_poses_vec[j].centroid_y)*(database[i].centroid_y- saliency_poses_vec[j].centroid_y);
-				if(d<dmin){
-					dmin=d;
-					closest = j;
-				}
-			}
-			ptpairTemp.push_back(closest);
-		}
-		//reverse
-		vector<int> ptpair_reverse;
-		for(int q=0;q<ptpairTemp.size(); q++){
-			ptpair_reverse.push_back(q);
-		}
 		
-		//sort
-		ptpair_reverse = bubblesort(ptpairTemp,ptpair_reverse);
-		for(int qq=0;qq<ptpair_reverse.size(); qq++){
-			ROS_INFO("%i", ptpair_reverse[qq]);
-		}
-		*/
 
 		ptpairs outPa = nearestNeighbour();
 
 		//Outlier Rejection 
-		/*
-		vector<cv::Point2f> points1, points2;
-		cv::Point2f pTemp;
-		for(int i = 0; i<database.size(); i++){
-			pTemp.x = database[ptpair_reverse[i]].centroid_x;
-			pTemp.y = database[ptpair_reverse[i]].centroid_y;
-			points1.push_back(pTemp);
-			//ROS_INFO("First =%i, x= %f  y= %f",i , pTemp.x,pTemp.y);
-			pTemp.x = saliency_poses_vec[i].centroid_x;
-			pTemp.y = saliency_poses_vec[i].centroid_y;
-			points2.push_back(pTemp);
-			//ROS_INFO("Connect =%i, x= %f  y= %f",i , pTemp.x,pTemp.y);
-		}
-
-		vector<uchar> outliers;
-		vector<cv::Point2f> points1_temp, points2_temp;
-		Mat F = findFundamentalMat_local(Mat(points1), Mat(points2), FM_RANSAC, 1, 0.99, &outliers);
-		vector<saliency_poses> tempPoses;
-		for(int u=0; u<outliers.size(); u++){
-  			if (outliers[u] == 0){
-				points1_temp.push_back(points1[u]);
-				//ROS_INFO("First =%i, x= %f  y= %f",u ,points1_temp[u].x,points1_temp[u].y);
-				points2_temp.push_back(points2[u]);
-				//ROS_INFO("Connect =%i, x= %f  y= %f",u , points2_temp[u].x,points2_temp[u].y);
-
-				
-				ptpairsNew.push_back(ptpair_reverse[u]);
-			}	
-
-		}
-		*/
+		
 		ptpairs outP = outlierRejection(outPa);
 
 		//k-nn tracking all frames
-		/*
-		database_all.push_back(database)
-		for(int gg=0; gg<ptpairsNew.size(); gg++){
-			for(int hh=0; hh<ptpairs_all.size(); hh++){
-				
-			}
+
+		if(SDB.size()>1){
+			SALPointVec NMinusTwoVec = SDB.SALdata[SDB.size()-2];
+			outP = nearestNeighbour2(NVec,NMinusTwoVec,outP);
+			
 		}
-*/
+
 		//move database
 
-ROS_INFO("%i == %i == %i",NVec.size(), outPa.size(), outP.size());
+		for(int i=0; i<outP.size(); i++){
+			ROS_INFO("i=%i, j=%i, frame=%i",i ,outP.atJ(i),outP.atFrame(i));
+		}		
+
+
 		NMinusOneVec = NVec;
 		ptpairs ptVec;
 		for(int uu=0;uu<NVec.size();uu++ ){
@@ -315,7 +286,7 @@ ROS_INFO("%i == %i == %i",NVec.size(), outPa.size(), outP.size());
 
 		SDB.ptpars.push_back(ptVec);
 		SDB.push_back(NVec);
-ROS_INFO("se");
+
 		// ptpairs_local -> ptpairs_global
 
 		database = saliency_poses_vec;
