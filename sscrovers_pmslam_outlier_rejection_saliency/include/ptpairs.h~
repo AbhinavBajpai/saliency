@@ -71,7 +71,7 @@ class ptpairs{
 			int i = pairs.size();
 			bool test = true;
 			for (int w=0; w<i; w++){
-				if (pairs.at(w).j == jIn  && pairs.atFrame(w) == frameIn){
+				if (pairs.at(w).j == jIn  && pairs.at(w).frame == frameIn){
 					if(pairs.at(w).d > dIn){
 
 						ptpair p;

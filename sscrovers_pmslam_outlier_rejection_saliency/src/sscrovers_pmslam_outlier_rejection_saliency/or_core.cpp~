@@ -137,14 +137,16 @@ void ORCore::featuresCallback(const geometry_msgs::PoseArray& msg)
 }
 
 ptpairs ORCore::nearestNeighbour(){
-	ROS_INFO("NN begin");
+	ROS_INFO("NN begin N = %i, N-1 = %i",NVec.size(),NMinusOneVec.size());
 	int closest;
 	ptpairs ptpairs_local;
 	float dmin;	
 	float d, area, areaMO;
+	int framee;
 	for(int i = 0; i<NVec.size(); i++){
 		dmin=10000;
 		closest=i;
+		framee = 0;
 		for(int j=0; j<NMinusOneVec.size(); j++){
 			d = NMinusOneVec.at(j).dist(NVec.at(i));
 			area = NVec.at(i).height * NVec.at(i).width;
@@ -152,10 +154,11 @@ ptpairs ORCore::nearestNeighbour(){
 			if(d<dmin && area < 4*areaMO && 4 * area > areaMO){
 				dmin=d;
 				closest = j;
+				framee = -1;
 			}
 		}
 		
-		ptpairs_local.add(closest,dmin,-1);
+		ptpairs_local.add(closest,dmin,framee);
 	}
 	ROS_INFO("NN End");
 	return ptpairs_local;
@@ -163,6 +166,7 @@ ptpairs ORCore::nearestNeighbour(){
 
 
 ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
+//TODO fix only points to unused points from n-1 frame
 	ROS_INFO("NN2 begin");
 	int closest;
 	ptpairs ptpairs_local;
@@ -176,7 +180,7 @@ ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
 				d = NM2.at(j).dist(N.at(i));
 				area = N.at(i).height * N.at(i).width;
 				areaMO = NM2.at(j).width * NM2.at(j).height;
-				if(d<dmin && area < 4*areaMO && 4 * area > areaMO){
+				if(d<dmin && area < 4*areaMO && 4 * area > areaMO ){
 					dmin=d;
 					closest = j;
 				}
@@ -197,9 +201,13 @@ ptpairs ORCore::outlierRejection(ptpairs inP){
 	vector<cv::Point2f> points1, points2;
 	cv::Point2f pTemp;
 	ROS_INFO("Outlier Rejection begin");
-	
+	for(int r=0;r<inP.size();r++){
+		ROS_INFO("Before i=%i, j=%i, frame=%i",r, inP.atJ(r), inP.atFrame(r));
+	}
 	std::vector <int> lis;
+
 	for(int i = 0; i<inP.size(); i++){
+	ROS_INFO("%i = %i", inP.atJ(i), NMinusOneVec.size() );
 		if(inP.pairs[i].frame == -1){
 			pTemp.x = NMinusOneVec.atX(inP.atJ(i));
 			pTemp.y = NMinusOneVec.atY(inP.atJ(i));
@@ -210,9 +218,10 @@ ptpairs ORCore::outlierRejection(ptpairs inP){
 			lis.push_back(i);
 		}
 	}
+	ROS_INFO("Outlier Rejection middle");
 	vector<uchar> outliers;
 	vector<cv::Point2f> points1_temp, points2_temp;
-	Mat F = findFundamentalMat_local(Mat(points1), Mat(points2), FM_RANSAC, 1, 0.99, &outliers);
+	Mat F = findFundamentalMat_local(Mat(points1), Mat(points2), FM_RANSAC, 5, 0.80, &outliers);
 	for(int u=0; u<outliers.size(); u++){
 		if (outliers[u] == 1){
 
@@ -220,6 +229,9 @@ ptpairs ORCore::outlierRejection(ptpairs inP){
 			inP.pairs[lis[u]].d = 0;
 			inP.pairs[lis[u]].frame = 0;
 		}	
+	}
+	for(int r=0;r<inP.size();r++){
+		ROS_INFO("After i=%i, j=%i, frame=%i",r, inP.atJ(r), inP.atFrame(r));
 	}
 	
 	ROS_INFO("Outlier Rejection end");
@@ -231,7 +243,7 @@ ptpairs ORCore::outlierRejection(ptpairs inP){
 void ORCore::filter()
 {
 
-	if(NMinusOneVec.empty()){
+	if(SDB.size() < 1){
 		//fill database
 		//database = saliency_poses_vec;
 		//database_all = saliency_poses_vec;
@@ -247,22 +259,20 @@ void ORCore::filter()
 			pyVec.push_back(py);
 		}
 		SDB.ptpars.push_back(pyVec);
+		SDB.unadjusted.push_back(pyVec);
 	}else{
 		//nearest neighbour
-		ROS_INFO("here");
 
-		ptpairs outPa = nearestNeighbour();
+		ptpairs outP = nearestNeighbour();
 
 		//Outlier Rejection 
 		
-		ptpairs outP = outlierRejection(outPa);
+		outP = outlierRejection(outP);
 
 		//k-nn tracking all frames
-
 		if(SDB.size()>1){
 			SALPointVec NMinusTwoVec = SDB.SALdata[SDB.size()-2];
 			outP = nearestNeighbour2(NVec,NMinusTwoVec,outP);
-			
 		}
 
 		//move database
@@ -270,6 +280,8 @@ void ORCore::filter()
 
 		NMinusOneVec = NVec;
 		ptpairs ptVec;
+
+		SDB.push_back(NVec);
 		for(int uu=0;uu<NVec.size();uu++ ){
 			ptpair ppp;
 			ppp.i = uu;
@@ -277,17 +289,20 @@ void ORCore::filter()
 			ppp.j = pi.j;
 			ppp.d = outP.atD(uu); 
 			ppp.frame = pi.frame;
-			ROS_INFO("i=%i, j=%i, frame=%i",uu ,ppp.j,ppp.frame);
+			//ROS_INFO("i=%i, j=%i, frame=%i",uu ,ppp.j,ppp.frame);
 			ptVec.push_back(ppp);	
 		}
+		SDB.ptpars.push_back(ptVec);
+		
+		
+		
 
 		
-		//file away
-		SDB.ptpars.push_back(ptVec);
-		SDB.push_back(NVec);
 
 		//push  to publish
-		std::vector <SURFPoint> outDB;
+		//ROS_INFO("Conversion Started");
+		//std::vector <SURFPoint> outDB = SDB.convert();
+		//std::vector <int> ptps = SDB.ptpairConverted;
 		
 	}	
 }
@@ -295,17 +310,14 @@ void ORCore::filter()
 pairInts ORCore::resolve(ptpair p){
 	pairInts pI;
 	if (p.frame != 0){
-		ptpair match = SDB.ptpars.at(SDB.size()+p.frame).at(p.j);
-		if (match.frame == 0){
-			pI.frame = SDB.size()-p.frame;
-			pI.j = match.j;
-		}else{
-			pI.frame = match.frame;
-			pI.j = match.j;
-		}	
+		ptpair match = SDB.ptpars.at(SDB.size()+p.frame-1).at(p.j);
+		
+		pI.frame = match.frame;
+		pI.j = match.j;
+			
 	}else{
 		pI.j = p.j;
-		pI.frame = SDB.size();
+		pI.frame = SDB.size()-1;
 	}
 		
 	return pI;

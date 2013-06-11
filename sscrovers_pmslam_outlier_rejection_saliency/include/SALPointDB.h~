@@ -18,12 +18,23 @@ class SALPointDB{
 		
 		std::vector <SALPointVec> SALdata;
 		std::vector <ptpairs> ptpars;
+		std::vector <int> startPoint;
+		int last;
 		
 		SALPointDB(){
+			upto=0;
+			last =0;
 		};	
 		
 		void push_back(SALPointVec in){
+			if(SALdata.size()<1){
+				startPoint.push_back(0);
+			}else{
+				int y = startPoint[startPoint.size()-1]+SALdata[SALdata.size()-1].size();
+				startPoint.push_back(1+y);
+			}
 			SALdata.push_back(in);
+			
 		};
 		
 		void new_vec(RoverState stateIn, std::time_t tIn){
@@ -40,23 +51,41 @@ class SALPointDB{
 		}
 
 		//TODO Eventually conversion stuff HERE
-		int upto = 0;
+		
+		int upto;
 		std::vector <SURFPoint> converted;
 		std::vector <int> ptpairConverted;
+
 		std::vector <SURFPoint> convert(){
 			if(SALdata.size()>upto){
 				for(int i=0; i<SALdata.size()-upto;i++){
 				//convert
 					SALPointVec t = SALdata[SALdata.size()-1-i];
-					//for(){
-
-					//}
+					ptpairs p = ptpars[SALdata.size()-1-i];
+					ROS_INFO("In here");
+					for(int j=0; j<t.size(); j++){
+						//Convert ptpairs
+						if(p.pairs[j].frame==0){
+							ptpairConverted.push_back(last);
+							last++;
+						}else{
+							ptpairConverted.push_back(ptpairConverted[startPoint[p.pairs[j].frame]+p.pairs[j].j]);	
+						}
+						//Convert DB
+						SURFPoint sp;
+						sp.pt.pt.x = t.atX(j);
+						sp.pt.pt.y = t.atY(j);
+						sp.state = t.state;
+						sp.pt.size = t.atH(j) * t.atW(j);
+						sp.index = converted.size();
+						converted.push_back(sp);
+					}
 				}
 				upto = SALdata.size();
 			}
 			return converted;
 		}
-
+		
 
 };
 

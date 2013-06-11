@@ -34,38 +34,6 @@ class ptpairs{
 			}
 		};
 
-		void add (int jIn, float dIn){
-			int i = pairs.size();
-			bool test = true;
-			for (int w=0; w<i; w++){
-				if (pairs.at(w).j == jIn){
-					if(pairs.at(w).d > dIn){
-						ptpair p;
-						p.i = i;
-						p.j = jIn;
-						p.d = dIn;
-						pairs.push_back(p);
-						pairs.at(w).d = 0;
-						pairs.at(w).j = w;
-					}else{
-						ptpair p;
-						p.i = i;
-						p.j = w;
-						p.d = 0;
-						pairs.push_back(p);
-					}
-					test = false;
-					break;
-				}
-			}
-			if (test){
-				ptpair p;
-				p.i = i;
-				p.j = jIn;
-				p.d = dIn;
-				pairs.push_back(p);
-			}
-		}
 
 		void add (int jIn, float dIn, int frameIn){
 			int i = pairs.size();
