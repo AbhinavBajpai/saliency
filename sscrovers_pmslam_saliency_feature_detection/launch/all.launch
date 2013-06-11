@@ -1,0 +1,26 @@
+<launch>
+	<arg name="kinect" value="false" />
+	<!-- Select camera stream -->
+   	<arg if="$(arg kinect)"  name="imagestream" value="/org_image" type="str" />
+   	<arg unless="$(arg kinect)" name="imagestream" value="/org_image" type="str" />
+
+    	<!-- Hou -->
+	<node name="Hou" pkg="sscrovers_pmslam_saliency_feature_detection" type="Hou" output="screen" ns="Hou">  
+		<remap from="/rgbimage_in" to="$(arg imagestream)" />
+      	<remap from="/saliency/image" to="/saliency/image_Hou" />
+	</node>
+
+    	<!-- Itti -->
+	<node name="Itti" pkg="sscrovers_pmslam_saliency_feature_detection" type="Itti" output="screen" ns="Itti">  
+		<remap from="/rgbimage_in" to="$(arg imagestream)" />
+      	<remap from="/saliency/image" to="/saliency/image_Itti" />
+	</node>
+
+    	<!-- Rudinac -->
+	<node name="Rudinac" pkg="sscrovers_pmslam_saliency_feature_detection" type="Rudinac" output="screen" ns="Rudinac">  
+		<remap from="/rgbimage_in" to="$(arg imagestream)" />
+      	<remap from="/saliency/image" to="/saliency/image_Rudinac" />
+	</node>
+
+</launch>
+

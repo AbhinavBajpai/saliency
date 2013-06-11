@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/dri-ros-pkg/!svn/ver/10/trunk/saliency_detection/include/saliency_detection
+END
+saliencyDetectionItti.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/dri-ros-pkg/!svn/ver/10/trunk/saliency_detection/include/saliency_detection/saliencyDetectionItti.h
+END
+saliencyDetectionHou.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/dri-ros-pkg/!svn/ver/10/trunk/saliency_detection/include/saliency_detection/saliencyDetectionHou.h
+END
+cvgabor.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/dri-ros-pkg/!svn/ver/10/trunk/saliency_detection/include/saliency_detection/cvgabor.h
+END
+saliencyDetectionRudinac.h
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/dri-ros-pkg/!svn/ver/10/trunk/saliency_detection/include/saliency_detection/saliencyDetectionRudinac.h
+END

@@ -1,0 +1,29 @@
+<launch>
+	<node name="image_transport" pkg="image_transport" type="republish" args="compressed in:=/gscam/image_raw raw out:=camera/image_decompressed" />
+	<arg name="kinect" value="false" />
+	<!-- Select camera stream -->
+   	<arg if="$(arg kinect)"  name="imagestream" value="/camera/image_decompressed" type="str" />
+   	<arg unless="$(arg kinect)" name="imagestream" value="/camera/image_decompressed" type="str" />
+
+    	<!-- Hou -->
+	<node name="saliencymapHou" pkg="saliency_detection" type="saliencyDetectionHou" output="screen" ns="Hou">  
+		<remap from="/rgbimage_in" to="$(arg imagestream)" />
+      	<remap from="/saliency/image" to="/saliency/image_Hou" />
+	</node>
+
+    	<!-- Itti -->
+	<node name="saliencymapItti" pkg="saliency_detection" type="saliencyDetectionItti" output="screen" ns="Itti">  
+		<remap from="/rgbimage_in" to="$(arg imagestream)" />
+      	<remap from="/saliency/image" to="/saliency/image_Itti" />
+	</node>
+
+    	<!-- Rudinac -->
+	<node name="saliencymapRudinac" pkg="saliency_detection" type="saliencyDetectionRudinac" output="screen" ns="Rudinac">  
+		<remap from="/rgbimage_in" to="$(arg imagestream)" />
+      	<remap from="/saliency/image" to="/saliency/image_Rudinac" />
+	</node>
+
+        <include file="$(find p2os_launch)/teleop_joy.launch" />
+
+</launch>
+

@@ -1,0 +1,19 @@
+#ifndef SALPOINTDB_H
+#define SALPOINTDB_H
+
+#include <vector>
+#include "RoverState.h"
+#include "SALPoint.h"
+#include "SALPointVec.h"
+#include<ctime>
+
+using namespace std;
+
+class SALPointDB{
+
+	public:
+
+
+}
+
+#endif
