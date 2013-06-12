@@ -63,13 +63,13 @@ public:
   //! Everything in this function is processed in each node loop
   void process();
 
-  SALPointDB  SDB;
   SALPointVec NVec;
   SALPointVec NMinusOneVec;
+  SALPointVec NMinusTwoVec;
   int step;
-  std::vector <SALPoint> vs;
-  std::vector<int> pp, ppm1,ppm2;
-
+  std::vector <sscrovers_pmslam_common::SPoint> vs;
+  std::vector<int> pp, ppm1, ppm2;
+ 
 private:
   //! current stamp from subscribed data messages
   ros::Time stamp_;
@@ -125,15 +125,13 @@ private:
   //! Callback function for trajectory subscription.
   void trajectoryCallback(const nav_msgs::PathConstPtr& msg);
   void filter();
-  cv::Mat findFundamentalMat_local(const Mat& points1, const Mat& points2, int method, double param1, double param2, vector<uchar>* mask);
-  vector<int> bubblesort(vector<int> w, vector<int> w2); 
+
+
   //temporary
   ros::Publisher db_pub_;
   void publishDB();
   ptpairs nearestNeighbour();
   ptpairs nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in);
-  ptpairs outlierRejection(ptpairs inP);
-  pairInts resolve(ptpair p);
 
 };
 

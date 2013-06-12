@@ -68,7 +68,7 @@ void ORCore::process()
     //filter_keypoints_ptr_->filterKeypoints();
     filter();
     publishPtPairs();
-    //publishDB(); //send data to DB
+    publishDB(); //send data to DB
   }
 }
 
@@ -89,6 +89,7 @@ void ORCore::publishPtPairs()
   memcpy(ptpairs_msg_.pairs.data(), pp.data(), size * sizeof(int)); 
   // publish msg
   ptpairs_pub_.publish(ptpairs_msg_);
+  pp.clear();
 
 }
 
@@ -109,31 +110,6 @@ void ORCore::featuresCallback(const geometry_msgs::PoseArray& msg)
 	}
 
 	process( );
-	//filter();
-
-}
- vector<int> ORCore::bubblesort(vector<int> w, vector<int> w2) 
-{ 
-	ROS_INFO("Bubblesort begin");
-	int temp, temp2;
-	bool finished = false;
-	 while (!finished) 
-	{ 
-		finished = true;
-		for (int i = 0; i < w.size()-1; i++) { 
-			if (w[i] > w[i+1]) { 
-				temp = w[i];
-				temp2 = w2[i];
-				 w[i] = w[i+1];
-				 w2[i] = w2[i+1];
-				 w[i+1] = temp;
-				 w2[i+1] = temp2;
-				 finished=false; 
-			} 
-		} 
-	} 
-	ROS_INFO("Bubblesort end");
-	return w2; 
 }
 
 ptpairs ORCore::nearestNeighbour(){
@@ -197,122 +173,54 @@ ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
 	return ptpairs_local;
 }
 
-ptpairs ORCore::outlierRejection(ptpairs inP){
-	vector<cv::Point2f> points1, points2;
-	cv::Point2f pTemp;
-	ROS_INFO("Outlier Rejection begin");
-/*
-	for(int r=0;r<inP.size();r++){
-		ROS_INFO("Before i=%i, j=%i, frame=%i",r, inP.atJ(r), inP.atFrame(r));
-	}
-*/
-	std::vector <int> lis;
 
-	for(int i = 0; i<inP.size(); i++){
-	ROS_INFO("%i = %i", inP.atJ(i), NMinusOneVec.size() );
-		if(inP.pairs[i].frame == -1){
-			pTemp.x = NMinusOneVec.atX(inP.atJ(i));
-			pTemp.y = NMinusOneVec.atY(inP.atJ(i));
-			points1.push_back(pTemp);
-			pTemp.x = NVec.atX(i);
-			pTemp.y = NVec.atY(i);
-			points2.push_back(pTemp);
-			lis.push_back(i);
-		}
-	}
-	ROS_INFO("Outlier Rejection middle");
-	vector<uchar> outliers;
-	vector<cv::Point2f> points1_temp, points2_temp;
-	Mat F = findFundamentalMat_local(Mat(points1), Mat(points2), FM_RANSAC, 5, 0.80, &outliers);
-	for(int u=0; u<outliers.size(); u++){
-		if (outliers[u] == 1){
-
-			inP.pairs[lis[u]].j = lis[u];
-			inP.pairs[lis[u]].d = 0;
-			inP.pairs[lis[u]].frame = 0;
-		}	
-	}
-/*
-	for(int r=0;r<inP.size();r++){
-		ROS_INFO("After i=%i, j=%i, frame=%i",r, inP.atJ(r), inP.atFrame(r));
-	}
-*/	
-	ROS_INFO("Outlier Rejection end");
-	return inP;
-}
 
 
 
 void ORCore::filter()
 {
 
-	if(SDB.size() < 1){
+	if(NMinusOneVec.size() < 1){
 		//fill database
-		//database = saliency_poses_vec;
-		//database_all = saliency_poses_vec;
 		NMinusOneVec = NVec;
-		SDB.push_back(NVec);
-		ptpair py;
-		ptpairs pyVec;
-		for(int i=0; i<NVec.size();i++){
-			py.i = i;
-			py.j = i;
-			py.frame =0;
-			py.d = 0;
-			pyVec.push_back(py);
-		}
-		SDB.ptpars.push_back(pyVec);
-		SDB.unadjusted.push_back(pyVec);
 
 		for(int p=0; p<NVec.size();p++){
-			vs.push_back(SALPoint(NVec.atX(p), NVec.atY(p), NVec.atW(p), NVec.atH(p), 1,0,step,0));
+			sscrovers_pmslam_common::SPoint sp;
+			sp.flag = 0;
+			sp.step = 0;
+			sp.n = 1;
+			sp.x = NVec.atX(p);
+			sp.y = NVec.atY(p);
+			sp.height = NVec.atH(p);
+			sp.width = NVec.atW(p);
+			sp.id = 0;
+			vs.push_back(sp);
+
+			vs.push_back(sp);
 			ppm1.push_back(p);
 		}
 		
 	}else{
 		//nearest neighbour
-
 		ptpairs outP = nearestNeighbour();
-
-		//Outlier Rejection 
 		
-		outP = outlierRejection(outP);
 
 		//k-nn tracking all frames
-		if(SDB.size()>1){
-			SALPointVec NMinusTwoVec = SDB.SALdata[SDB.size()-2];
+		if(NMinusTwoVec.size()>0){
 			outP = nearestNeighbour2(NVec,NMinusTwoVec,outP);
 		}
 
 		//move database
 
-
+		NMinusTwoVec = NMinusOneVec;
 		NMinusOneVec = NVec;
-		ptpairs ptVec;
 
-		SDB.push_back(NVec);
-		for(int uu=0;uu<NVec.size();uu++ ){
-			ptpair ppp;
-			ppp.i = uu;
-			pairInts pi = resolve(outP.at(uu));
-			ppp.j = pi.j;
-			ppp.d = outP.atD(uu); 
-			ppp.frame = pi.frame;
-			ROS_INFO("i=%i, j=%i, frame=%i",uu ,ppp.j,ppp.frame);
-			ptVec.push_back(ppp);	
-		}
 
-		
-
-		SDB.ptpars.push_back(ptVec);
-		
-		int ppUp=0;
-		int start;
 		for(int e=0;e<NVec.size();e++ ){
 			ptpair plast = outP.at(e);
 			if(plast.frame == -1){
 			//n-1 frame
-				int object = ppm1[plast.j];
+				int object = ppm1.at(plast.j);
 				pp.push_back(object);
 				vs[object].flag = 1;
 				vs[object].step = step;
@@ -324,9 +232,9 @@ void ORCore::filter()
 					
 			}else if(plast.frame == -2){
 			//n-2 frame
-				int object = ppm1[plast.j];
+				int object = ppm2.at(plast.j);
 				pp.push_back(object);
-				vs[object].flag = 1;
+				vs[object].flag = 2;
 				vs[object].step = step;
 				vs[object].n += 1;
 				vs[object].x = NVec.atX(e);
@@ -337,56 +245,22 @@ void ORCore::filter()
 			}else{
 			//new object
 				pp.push_back(vs.size());
-				vs.push_back(SALPoint(NVec.atX(e), NVec.atY(e), NVec.atW(e), NVec.atH(e), 1,0,step,0));
+				sscrovers_pmslam_common::SPoint sp;
+				sp.flag = 1;
+				sp.step = step;
+				sp.n += 1;
+				sp.x = NVec.atX(e);
+				sp.y = NVec.atY(e);
+				sp.height = NVec.atH(e);
+				sp.width = NVec.atW(e);
+				vs.push_back(sp);
 			}
 		}
-		//push  to publish
-		//ROS_INFO("Conversion Started");
-		//std::vector <SURFPoint> outDB = SDB.convert();
-		//std::vector <int> ptps = SDB.ptpairConverted;
 		
 	}
 	ppm2 = ppm1;
 	ppm1 = pp;
 	step++;	
-}
-
-pairInts ORCore::resolve(ptpair p){
-	pairInts pI;
-	if (p.frame != 0){
-		ptpair match = SDB.ptpars.at(SDB.size()+p.frame-1).at(p.j);
-		
-		pI.frame = match.frame;
-		pI.j = match.j;
-			
-	}else{
-		pI.j = p.j;
-		pI.frame = SDB.size()-1;
-	}
-		
-	return pI;
-}
-
-cv::Mat ORCore::findFundamentalMat_local(const Mat& points1, const Mat& points2, int method, double param1, double param2, vector<
-    uchar>* mask)
-{
-  CV_Assert(points1.checkVector(2) >= 0 && points2.checkVector(2) >= 0 &&
-      (points1.depth() == CV_32F || points1.depth() == CV_32S) &&
-      points1.depth() == points2.depth());  
-  Mat F(3, 3, CV_64F);
-  CvMat _pt1 = Mat(points1), _pt2 = Mat(points2);
-  CvMat matF = F, _mask, *pmask = 0;
-  if( mask )
-  {
-    mask->resize(points1.cols*points1.rows*points1.channels()/2);
-    pmask = &(_mask = cvMat(1, (int)mask->size(), CV_8U, (void*)&(*mask)[0]));
-  }
-  int n = cvFindFundamentalMat( &_pt1, &_pt2, &matF, method, param1, param2, pmask );
-
-
-  if( n <= 0 )
-  F = Scalar(0);
-  return F;
 }
 
 
@@ -434,23 +308,12 @@ void ORCore::trajectoryCallback(const nav_msgs::PathConstPtr& msg)
 
 void ORCore::publishDB()
 {
-  //ROS_STATIC_ASSERT(sizeof(MyVector3) == 24);
-
   sscrovers_pmslam_common::SALVector sal_db;
 
   sal_db.header.stamp.nsec = step;
 
-  sal_db.data.resize(sizeof(SPoint) * vs.size());
-  for(int i=0; i<vs.size();i++){
-	sal_db.data[i].x = vs[i].x;
-	sal_db.data[i].y = vs[i].y;
-	sal_db.data[i].width = vs[i].width;
-	sal_db.data[i].height = vs[i].height;
-	sal_db.data[i].n = vs[i].n;
-	sal_db.data[i].id = vs[i].id;
-	sal_db.data[i].step = vs[i].step;
-	sal_db.data[i].flag = vs[i].flag;
-  }
+  sal_db.data.resize(sizeof(sscrovers_pmslam_common::SPoint) * vs.size());
+  memcpy(sal_db.data.data(), vs.data(), sizeof(sscrovers_pmslam_common::SPoint) * vs.size()); 
 
   db_pub_.publish(sal_db);
 }
@@ -466,16 +329,13 @@ int main(int argc, char **argv)
   // Create a new NodeExample object.
   ORCore *or_core = new ORCore(&n); // __atribute__... only for eliminate unused variable warning :)
 
-  //until we use only img callback, below is needless
-  // Tell ROS how fast to run this node.
+
   ros::Rate r(or_core->rate_);
 
   // Main loop.
 
   while (n.ok())
   {
-    //or_core->Process();
-    //fd_core->Publish();
     ros::spinOnce();
     r.sleep();
   }
