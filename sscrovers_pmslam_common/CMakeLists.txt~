@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS angles cv_bridge geometry_msgs image_tra
    FILES
    ControlVector.msg
    DynamicArray.msg
+   DynamicArrayFeature.msg
    IDPoint.msg
    Landmark.msg
    Map3D.msg
