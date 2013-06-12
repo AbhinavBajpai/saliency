@@ -1,0 +1,22 @@
+[general]
+mode = 2
+display = true
+save = true
+
+[trajectory]
+file = trajectory.fli
+
+
+[image]
+px = 320
+py = 240
+
+
+[SLAM]
+statesize = 3
+meas_statesize = 3
+odometryerror = 0.1
+range = 10
+lambdasize = 10000
+
+

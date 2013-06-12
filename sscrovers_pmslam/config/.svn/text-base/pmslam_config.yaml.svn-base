@@ -1,0 +1,30 @@
+general:
+	mode: 2
+	display: true
+	save: true
+	logfile: true
+	path: 'input/'
+	ImgFileName 'frame_orig_'
+
+trajectory:
+	file: 'trajectory.fli'
+
+image:
+	px: 320
+	py: 240
+	scale: 1
+
+SLAM:
+	statesize: 3
+	meas_statesize: 3
+	odometryerror: 0.1
+	range: 10
+	lambdasize: 10000
+	landmark_tracking: 94
+
+camera:
+	vfov: 52.2
+	hfov: 66.7
+	pan: 0.0
+	tilt: 45.0
+	height: 0.52

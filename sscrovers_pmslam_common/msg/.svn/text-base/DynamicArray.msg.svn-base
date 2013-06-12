@@ -1,0 +1,4 @@
+Header header
+uint32[] dims
+string[] types
+uint8[] data

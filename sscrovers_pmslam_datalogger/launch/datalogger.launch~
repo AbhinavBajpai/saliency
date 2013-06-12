@@ -1,0 +1,51 @@
+<launch>
+	<node pkg="sscrovers_pmslam_datalogger" type="datalogger" name="pmslam_datalogger"
+		output="screen">
+
+		<!--node pkg="sscrovers_pmslam_datalogger" type="datalogger" name="pmslam_datalogger" -->
+		<!-- frequency rate of node -->
+		<param name="rate" value="10.0" />
+		<param name="on_new_data" value="false" />
+		<param name="disp_images" value="true" />
+		<param name="log_data" value="true" />
+
+		<!-- 'to_flie flags' -->
+		<!--<param name="map3d_to_file" value="false"/> -->
+		<param name="pmslamdata_to_file" value="true" />
+		<param name="ctrlvec_to_file" value="false" />
+		<param name="esttraj_to_file" value="false" />
+		<param name="intraj_to_file" value="false" />
+		<param name="truetraj_to_file" value="false" />
+		<param name="ptpairs_to_file" value="false" />
+		<param name="points3d_to_file" value="false" />
+		<param name="features_to_file" value="false" />
+		<param name="db_to_file" value="false" />
+		<param name="img_to_file" value="false" />
+		<param name="view_output" value="true" />
+		<param name="publish_ptcloud" value="true" />
+		<param name="publish_tf" value="true" />
+		<param name="publish_pose" value="true" />
+
+		<!-- topic names -->
+		<!-- <param name="map3d_sub_topic_name" value="map3d"/> -->
+		<param name="pmslamdata_sub_data_topic_name" value="pmslam_data" />
+		<param name="ctrlvec_sub_topic_name" value="ctrl_vec" />
+		<param name="esttraj_sub_topic_name" value="est_traj" />
+		<param name="intraj_sub_topic_name" value="in_traj" />
+		<param name="truetraj_sub_topic_name" value="true_traj" />
+		<param name="ptpairs3d_sub_topic_name" value="points3d" />
+		<param name="db_sub_topic_name" value="output_db" />
+		<param name="features_sub_topic_name" value="features" />
+		<param name="ptpairs_sub_topic_name" value="ptpairs" />
+		<param name="image_sub_topic_name" value="org_image" />
+
+		<!-- config -->
+		<param name="no_files" value="false" />
+		<!-- <param name="data_storing_path" value="abs_path" />-->
+		<param name="raw_data_subdir_name" value="raw_data" />
+		<param name="images_subdir_path" value="images" />
+		<param name="reports_subdir_path" value="reports" />
+
+	</node>
+</launch>
+	

@@ -1,0 +1,39 @@
+<launch>
+	<!--node pkg="sscrovers_pmslam_control" type="ctrl_node" name="pmslam_ctrl_node"  output="screen"-->
+	<node pkg="sscrovers_pmslam_control" type="ctrl_node" name="pmslam_ctrl_node">
+    	
+		<!-- frequency rate of node -->
+   		<param name="rate" value="1.0" />
+    	
+		<!-- name of input image topic -->
+    	<param name="sub_image_topic_name" value="cam_image" />
+    	
+		<!-- name of output image topic -->
+    	<param name="pub_image_topic_name" value="org_image" />
+
+		<!-- name of output image topic -->
+    	<param name="pub_real_traj_topic_name" value="true_traj" />
+
+		<!-- name of output image topic -->
+    	<param name="pub_est_traj_topic_name" value="est_traj" />
+
+		<!-- name of output image topic -->
+    	<param name="pub_in_traj_topic_name" value="in_traj" />
+
+		<!-- name of output image topic -->
+    	<param name="sub_odom_topic_name" value="odom" />
+
+		<!-- name of output image topic -->
+    	<param name="pub_ctrl_vec_topic_name" value="ctrl_vec" />
+
+		<!-- name of output image topic -->
+    	<param name="xy_noise" value="0.0" />
+
+		<!-- name of output image topic -->
+    	<param name="z_noise" value="0.0" />
+
+		<!-- name of output image topic -->
+    	<param name="yaw_noise" value="0.0" />
+
+    </node>
+</launch>

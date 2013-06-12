@@ -1,0 +1,105 @@
+#ifndef FD_CORE_H
+#define FD_CORE_H
+
+// ROS includes
+#include "ros/ros.h"
+#include "ros/time.h"
+#include <tf/tf.h>
+
+//OpenCV
+#include <cv.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+
+//ROS messages
+#include <sensor_msgs/image_encodings.h>
+#include <nav_msgs/Path.h>
+#include "sscrovers_pmslam_common/PtPairs.h"
+#include "sscrovers_pmslam_common/DynamicArray.h"
+#include "sscrovers_pmslam_common/DynamicArrayFeature.h"
+
+//pmslam function class
+#include "filter_keypoints_or.h"
+
+namespace enc = sensor_msgs::image_encodings;
+
+using std::string;
+
+class ORCore
+{
+public:
+  //! Constructor.
+  ORCore(ros::NodeHandle *_n);
+
+  //! Destructor.
+  ~ORCore();
+
+  //! rate for node main loop
+  int rate_;
+
+  //! Everything in this function is processed in each node loop
+  void process();
+
+private:
+  //! current stamp from subscribed data messages
+  ros::Time stamp_;
+
+  //! topics name
+  string sub_features_topic_name_, sub_trajectory_topic_name_, pub_ptpairs_topic_name_;
+
+  //! features subscriber
+  ros::Subscriber features_sub_;
+
+  //! keypoints subscriber
+  ros::Subscriber trajectory_sub_;
+
+  //! point pairs indexes publisher
+  ros::Publisher ptpairs_pub_;
+
+  //! ptpairs storage
+  sscrovers_pmslam_common::PtPairs ptpairs_msg_;
+
+  //!Estimated trajectory
+  nav_msgs::Path est_traj_msg_;
+
+  //! features database object
+  FeaturesDB_t db_;
+
+  //! current step
+  int step_;
+
+  //! current rover state
+  RoverState* curr_pose_ptr_;
+
+  //! debug flags
+  bool debug_disp_f_;
+  bool features_to_file_f_;
+  bool ptpoints_to_file_f_;
+  bool db_to_file_f_;
+  bool traj_to_file_f_;
+  //! init data value received flag
+  bool data_completed_f_;
+
+  //! Object of functional class
+  FilterKeypointsOR* filter_keypoints_ptr_;
+
+  //! send new surf features to data base
+  void sendToSurfDataBase();
+
+  //! Function for indexes to pair points with data base
+  void publishPtPairs();
+
+  //! Callback function for features subscription.
+  void featuresCallback(const sscrovers_pmslam_common::DynamicArrayConstPtr& msg);
+
+  //! Callback function for trajectory subscription.
+  void trajectoryCallback(const nav_msgs::PathConstPtr& msg);
+
+  //temporary
+  ros::Publisher db_pub_;
+  void publishDB();
+};
+
+#endif //FD_CORE_H

@@ -1,0 +1,387 @@
+#include "ctrl_core_dy.h"
+#include "std_msgs/String.h"
+#include <boost/bind.hpp>
+
+using std::string;
+
+bool isNan(double f)
+{
+  return f != f;
+}
+
+void imageCallBackDy(const sensor_msgs::Image::ConstPtr& msg, CtrlCore * cd);
+
+void odomCallBackDy(const nav_msgs::OdometryConstPtr& msg, CtrlCore * cd);
+
+void fixQuatNan(geometry_msgs::Quaternion& q)
+{
+  ROS_WARN("HAVE TO FIX QUAT...");
+  if (isNan(q.x) || isNan(q.y) || isNan(q.z) || isNan(q.w))
+  {
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.0;
+    q.w = 1.0;
+  }
+}
+
+void printPose(const geometry_msgs::Pose* in, const std::string comment)
+{
+  //below only for debugging
+  double _roll, _pitch, _yaw;
+
+#if ROS_VERSION_MINIMUM(1, 8, 0) // if current ros version is >= 1.8.0 (fuerte)
+  //min. fuerte
+  tf::Quaternion _q;
+  tf::quaternionMsgToTF(in->orientation, _q);
+  tf::Matrix3x3(_q).getRPY(_roll, _pitch, _yaw);
+#else
+  //electric and older
+  btQuaternion _q;
+  tf::quaternionMsgToTF(in->orientation, _q);
+  btMatrix3x3(_q).getRPY(_roll, _pitch, _yaw);
+#endif
+}
+
+CtrlCore::CtrlCore(ros::NodeHandle *_n) :
+    it_(*_n)
+{
+  wait_time_ = ros::Duration(3.0);
+
+  // Initialise node parameters from launch file or command line.
+  // Use a private node handle so that multiple instances of the node can be run simultaneously
+  // while using different parameters.
+
+  ros::NodeHandle private_node_handle("~");
+
+  private_node_handle.param("rate", rate_, int(10));
+
+  private_node_handle.param("pub_image_topic_name", pub_image_topic_name_, string("output_image"));
+  private_node_handle.param("pub_real_traj_topic_name", pub_real_traj_topic_name_, string("true_traj"));
+  private_node_handle.param("pub_est_traj_topic_name", pub_est_traj_topic_name_, string("est_traj"));
+  private_node_handle.param("pub_in_traj_topic_name", pub_in_traj_topic_name_, string("in_traj"));
+
+  private_node_handle.param("pub_ctrl_vec_topic_name", pub_ctrl_vec_topic_name_, string("ctrl_vec"));
+  private_node_handle.param("xy_noise", xy_noise_, double(0.0));
+  private_node_handle.param("z_noise", z_noise_, double(0.0));
+  private_node_handle.param("yaw_noise", yaw_noise_, double(0.0));
+  private_node_handle.param("disp_img", disp_input_image_, bool(false));
+
+  //subscribers
+  odom_ds = dySubscriber<nav_msgs::Odometry>("odom", *_n);
+  image_ds = dySubscriber<sensor_msgs::Image>("cam_image", *_n);
+
+
+  //publishers
+  image_dp = dyPublisher<sensor_msgs::Image>("output_image", *_n);
+  real_traj_dp  = dyPublisher<nav_msgs::Path>("true_traj", *_n);
+  est_traj_dp  = dyPublisher<nav_msgs::Path>("est_traj", *_n);
+  in_traj_dp  = dyPublisher<nav_msgs::Path>("in_traj", *_n);
+  ctrl_vec_dp  = dyPublisher<geometry_msgs::PoseStamped>("ctrl_vec", *_n);
+
+  cv_input_img_ptr_.reset(new cv_bridge::CvImage);
+  cv_output_img_ptr_.reset(new cv_bridge::CvImage);
+
+  true_trajectory_msg_.poses.clear();
+  est_trajectory_msg_.poses.clear();
+  in_trajectory_msg_.poses.clear();
+
+  img_callback_inv = false;
+  odom_callback_inv = false;
+
+  curr_step_ = 0;
+
+  //wait for received data
+  while ((ros::ok()) && waitForData())
+
+    ros::spinOnce();
+  //add current pose to input trajectory
+  in_trajectory_msg_.poses.push_back(curr_pose_msg_);
+  //put current step to header
+  in_trajectory_msg_.poses[curr_step_].header.stamp.nsec = curr_step_; //TODO remove step
+
+  // Setting the true initial position
+  true_trajectory_msg_.poses.push_back(in_trajectory_msg_.poses[curr_step_]);
+  // Setting the estimated initial position
+  est_trajectory_msg_.poses.push_back(in_trajectory_msg_.poses[curr_step_]);
+
+
+  if (disp_input_image_)
+    cv::namedWindow(WINDOW);
+}
+
+CtrlCore::~CtrlCore()
+{
+  if (disp_input_image_)
+    cv::destroyWindow(WINDOW);
+}
+
+void CtrlCore::resetTime() //TODO check this
+{
+  time_ = ros::Time::now();
+}
+
+
+
+bool CtrlCore::waitForData() //TODO check this
+{
+  //bool time_cond = ((ros::Time::now()-time_)>wait_time_);
+  //if(time_cond) ROS_
+  odom_ds.subscribeOnce(boost::bind(odomCallBackDy,_1,this));
+  image_ds.subscribe(boost::bind(imageCallBackDy,_1,this));
+  return !((img_callback_inv) && (odom_callback_inv));
+}
+
+void CtrlCore::process()
+{
+  curr_step_++; //TODO remove
+
+  //process received data
+  processOdometry();
+  processTrajectory();
+  processImage();
+
+  //publish everything
+  publishCtrlVector();
+  publishTrajectories();
+  publishImage();
+
+  img_callback_inv = false;
+  odom_callback_inv = false;
+}
+
+void CtrlCore::processOdometry()
+{
+  curr_pose_msg_.header.stamp.nsec = curr_step_; //TODO remove this
+
+  // TODO TEMP: pitch angle of camera - get this from camera tf
+  //tf::Quaternion _quat = tf::createQuaternionFromRPY(0.0,angles::from_degrees(camera_pitch_),0.0);
+  //tf::Quaternion _quat2;
+  //tf::quaternionMsgToTF(curr_pose_msg_.pose.orientation, _quat2);
+  //_quat2 += _quat;
+  //tf::quaternionTFToMsg(_quat2, curr_pose_msg_.pose.orientation);
+
+  // TODO TEMP: height of camera - get this from camera tf
+  //curr_pose_msg_.pose.position.z += camera_z_;
+
+  //printPose(&curr_pose_msg_.pose, "curr_pose");
+}
+
+void CtrlCore::processTrajectory()
+{
+  //	from PMSLAM old code
+  //	srand(time(NULL));
+  //	double r = double(rand())/(double(RAND_MAX)+1.0); // random double in range 0.0 to 1.0 (non inclusive)
+  //	double noise = -(*ODERR) + r*((*ODERR) + (*ODERR)); // transform to wanted range
+  //	double z_noise = -0.001 + r*(0.001 + 0.001);
+  //	double noise_yaw = -1 + r*(1 + 1); // transform to wanted range
+
+  // add current position to input trajectory
+  in_trajectory_msg_.poses.push_back(curr_pose_msg_);
+  if ((int)in_trajectory_msg_.poses.size() - 1 != curr_step_)
+    ROS_ERROR("desynchronization... abort...");
+
+  //put current step to header
+  in_trajectory_msg_.poses[curr_step_].header.stamp.nsec = curr_step_;
+
+  //printPose(&in_trajectory_msg_.poses[curr_step_].pose, "in_traj");
+
+  //temporary quaternions to convert to tf quaternions and add it
+  tf::Quaternion _q1, _q2;
+  //temporary pose
+  geometry_msgs::PoseStamped _p;
+  //put current step to trajectories header
+  _p.header.stamp.nsec = curr_step_;
+
+  //create quaternion for orientation noise
+  tf::Quaternion noise_quat = tf::createQuaternionFromRPY(0.0, 0.0, yaw_noise_);
+
+  //update real trajectory
+  //positions
+  _p.pose.position.x = true_trajectory_msg_.poses[curr_step_ - 1].pose.position.x + ctrl_vec_msg_.pose.position.x
+      + xy_noise_;
+  _p.pose.position.y = true_trajectory_msg_.poses[curr_step_ - 1].pose.position.y + ctrl_vec_msg_.pose.position.y
+      + xy_noise_;
+  _p.pose.position.z = true_trajectory_msg_.poses[curr_step_ - 1].pose.position.z + ctrl_vec_msg_.pose.position.z
+      + z_noise_;
+  //orientation
+  tf::quaternionMsgToTF(true_trajectory_msg_.poses[curr_step_ - 1].pose.orientation, _q1);
+  tf::quaternionMsgToTF(ctrl_vec_msg_.pose.orientation, _q2);
+  tf::quaternionTFToMsg(_q1 + _q2 + noise_quat, _p.pose.orientation);
+
+  fixQuatNan(_p.pose.orientation);
+
+  //add new pose to trajectory
+  true_trajectory_msg_.poses.push_back(_p);
+  //check if length of trajectory is appropriate
+  if ((int)true_trajectory_msg_.poses.size() - 1 != curr_step_)
+    ROS_ERROR("desynchronization... abort...");
+
+  printPose(&true_trajectory_msg_.poses[curr_step_].pose, "real_traj");
+
+  //update estimated trajectory
+  //positions
+  _p.pose.position.x = est_trajectory_msg_.poses[curr_step_ - 1].pose.position.x + ctrl_vec_msg_.pose.position.x;
+  _p.pose.position.y = est_trajectory_msg_.poses[curr_step_ - 1].pose.position.y + ctrl_vec_msg_.pose.position.y;
+  _p.pose.position.z = est_trajectory_msg_.poses[curr_step_ - 1].pose.position.z + ctrl_vec_msg_.pose.position.z;
+  //orientation
+  tf::quaternionMsgToTF(est_trajectory_msg_.poses[curr_step_ - 1].pose.orientation, _q1);
+  tf::quaternionMsgToTF(ctrl_vec_msg_.pose.orientation, _q2);
+  tf::quaternionTFToMsg(_q1 + _q2, _p.pose.orientation);
+
+  fixQuatNan(_p.pose.orientation);
+
+  //add new pose to trajectory
+  est_trajectory_msg_.poses.push_back(_p);
+  //check if length of trajectory is appropriate
+  if ((int)est_trajectory_msg_.poses.size() - 1 != curr_step_)
+    ROS_ERROR("desynchronization... abort...");
+
+  printPose(&est_trajectory_msg_.poses[curr_step_].pose, "est_traj");
+
+}
+
+void CtrlCore::processImage()
+{
+  cv_input_img_ptr_->header.stamp.nsec = curr_step_;
+
+  *cv_output_img_ptr_ = *cv_input_img_ptr_;
+
+}
+
+void CtrlCore::publishImage()
+{
+  //image_pub_.publish(cv_output_img_ptr_->toImageMsg());
+  image_dp.publishOnceWait(*(cv_output_img_ptr_->toImageMsg()));
+}
+
+void CtrlCore::publishTrajectories()
+{
+  true_trajectory_msg_.header.stamp.nsec = curr_step_;
+  //real_traj_pub_.publish(true_trajectory_msg_);
+  real_traj_dp.publishOnce(true_trajectory_msg_);
+  est_trajectory_msg_.header.stamp.nsec = curr_step_;
+  //est_traj_pub_.publish(est_trajectory_msg_);
+  est_traj_dp.publishOnce(est_trajectory_msg_);
+  in_trajectory_msg_.header.stamp.nsec = curr_step_;
+  //in_traj_pub_.publish(in_trajectory_msg_);
+  in_traj_dp.publishOnce(in_trajectory_msg_);
+}
+
+void CtrlCore::publishCtrlVector()
+{
+  ctrl_vec_msg_.header.stamp.nsec = curr_step_;
+
+  //temporary quaternions to convert to tf quaternions and add it
+  tf::Quaternion _q1, _q2;
+
+  ctrl_vec_msg_.pose.position.x = in_trajectory_msg_.poses[curr_step_].pose.position.x
+      - in_trajectory_msg_.poses[curr_step_ - 1].pose.position.x;
+  ctrl_vec_msg_.pose.position.y = in_trajectory_msg_.poses[curr_step_].pose.position.y
+      - in_trajectory_msg_.poses[curr_step_ - 1].pose.position.y;
+  ctrl_vec_msg_.pose.position.z = in_trajectory_msg_.poses[curr_step_].pose.position.z
+      - in_trajectory_msg_.poses[curr_step_ - 1].pose.position.z;
+
+  tf::quaternionMsgToTF(in_trajectory_msg_.poses[curr_step_].pose.orientation, _q1);
+  tf::quaternionMsgToTF(in_trajectory_msg_.poses[curr_step_ - 1].pose.orientation, _q2);
+  //ROS_INFO("q2, %f \t %f \t %f \t %f", _q2.x(),_q2.y(),_q2.z(),_q2.w());
+  tf::quaternionTFToMsg(_q1 - _q2, ctrl_vec_msg_.pose.orientation);
+
+  fixQuatNan(ctrl_vec_msg_.pose.orientation);
+  //ctrl_vec_pub_.publish(ctrl_vec_msg_);
+  ctrl_vec_dp.publishOnce(ctrl_vec_msg_);
+}
+
+void CtrlCore::odomCallBack(const nav_msgs::OdometryConstPtr& msg)
+{
+  odom_callback_inv = true;
+  //! push forward time stamp
+  curr_pose_msg_.header.stamp = msg->header.stamp;
+  curr_pose_msg_.pose = msg->pose.pose;
+
+  fixQuatNan(curr_pose_msg_.pose.orientation);
+}
+
+void CtrlCore::imageCallBack(const sensor_msgs::ImageConstPtr& msg)
+{/*
+  img_callback_inv = true;
+  //! push forward time stamp
+  cv_input_img_ptr_->header.stamp = msg->header.stamp;
+
+  try
+  {
+    cv_input_img_ptr_ = cv_bridge::toCvCopy(msg, enc::MONO8);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+
+  if (disp_input_image_)
+  {
+    cv::imshow(WINDOW, cv_input_img_ptr_->image);
+    cv::waitKey(3);
+  }*/
+}
+
+
+void imageCallBackDy(const sensor_msgs::Image::ConstPtr& msg, CtrlCore * cd){
+	cd->img_callback_inv = true;
+	try
+	{
+		cd->cv_input_img_ptr_ = cv_bridge::toCvCopy(msg, enc::MONO8);
+	}
+	catch (cv_bridge::Exception& e)
+	{
+		ROS_ERROR("cv_bridge exception: %s", e.what());
+	return;
+	}
+
+	if (cd->disp_input_image_)
+	{
+		cv::imshow(WINDOW, cd->cv_input_img_ptr_->image);
+		cv::waitKey(3);
+	}
+}
+
+void odomCallBackDy(const nav_msgs::OdometryConstPtr& msg, CtrlCore * cd){
+	cd->odom_callback_inv = true;
+	cd->curr_pose_msg_.header.stamp = msg->header.stamp;
+	cd->curr_pose_msg_.pose = msg->pose.pose;
+
+	fixQuatNan(cd->curr_pose_msg_.pose.orientation);
+}
+
+//-----------------------------MAIN----------------------------
+int main(int argc, char **argv)
+{
+  // Set up ROS.
+  ros::init(argc, argv, "control_module");
+  ros::NodeHandle n;
+  // Create a new NodeExample object.
+  CtrlCore *ctrl_core = new CtrlCore(&n);
+
+  ros::Rate r(ctrl_core->rate_);
+  // Main loop.
+
+  while (n.ok())
+  {
+    while (n.ok() && ctrl_core->waitForData())
+    {
+      ros::spinOnce();
+    }
+    ctrl_core->process();
+    r.sleep();
+    //ROS_INFO("curr_step: %ld", ctrl_core->curr_step_);
+  }
+  ctrl_core->image_ds.onShutdown();
+  ctrl_core->odom_ds.onShutdown();
+
+  ctrl_core->image_dp.onShutdown();
+  ctrl_core->real_traj_dp.onShutdown();
+  ctrl_core->est_traj_dp.onShutdown();
+  ctrl_core->in_traj_dp.onShutdown();
+  ctrl_core->ctrl_vec_dp.onShutdown();
+  return 0;
+} // end main()

@@ -1,0 +1,15 @@
+<launch>
+	<node pkg="sscrovers_pmslam_feature_detection" type="fd_node" name="feature_detection" output="screen">
+      <!-- frequency rate of node -->
+      <param name="rate" value="1.0" />
+
+      <!-- name of input image topic -->
+      <param name="input_img_topic_name" value="org_image" />
+
+      <!-- name of output image topic -->
+      <param name="output_img_topic_name" value="fd_image" />
+
+
+    </node>
+</launch>
+	
