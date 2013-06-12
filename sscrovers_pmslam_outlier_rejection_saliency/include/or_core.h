@@ -18,6 +18,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <nav_msgs/Path.h>
 #include "sscrovers_pmslam_common/PtPairs.h"
+#include "sscrovers_pmslam_common/SALVector.h"
+#include "sscrovers_pmslam_common/SPoint.h"
 #include "sscrovers_pmslam_common/DynamicArray.h"
 #include "sscrovers_pmslam_common/DynamicArrayFeature.h"
 
@@ -64,6 +66,9 @@ public:
   SALPointDB  SDB;
   SALPointVec NVec;
   SALPointVec NMinusOneVec;
+  int step;
+  std::vector <SALPoint> vs;
+  std::vector<int> pp, ppm1,ppm2;
 
 private:
   //! current stamp from subscribed data messages

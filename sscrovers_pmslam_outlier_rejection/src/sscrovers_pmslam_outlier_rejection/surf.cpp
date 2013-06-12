@@ -68,24 +68,18 @@ void findPairs(const vector<SURFPoint>* SURFDatabase, const CvSeq* imageKeypoint
                vector<int>& ptpairs)
 {
   unsigned int i;
-  //CvSeqReader reader, kreader;
-  /*cvStartReadSeq( imageKeypoints, &kreader );
-   cvStartReadSeq( imageDescriptors, &reader );*/
+
   ptpairs.clear();
 
-  //for( i = 0; i < objectDescriptors->total; i++ )
-  //for( i = 0; i < imageDescriptors->total; i++ )
   for (i = 0; i < SURFDatabase->size(); i++)
   {
-    //const CvSURFPoint* kp = (const CvSURFPoint*)kreader.ptr;
+
     const CvSURFPoint kp = (*SURFDatabase)[i].pt;
-    //const float* descriptor = (const float*)reader.ptr;
+
     float *mvec = new float[64];
 
     fillArray(mvec, SURFDatabase, i);
 
-    /*CV_NEXT_SEQ_ELEM( kreader.seq->elem_size, kreader );
-     CV_NEXT_SEQ_ELEM( reader.seq->elem_size, reader );*/
     int nearest_neighbor = naiveNearestNeighbor(mvec, kp.laplacian, imageKeypoints, imageDescriptors);
     if (nearest_neighbor >= 0)
     {

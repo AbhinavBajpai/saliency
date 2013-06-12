@@ -167,7 +167,7 @@ void FilterKeypointsOR::filterKeypoints()
 
     imageFKin->rejectOutliers(SURFDatabase, *ptpairsFKout);
 
-    imageFKin->rejectOutliers(SURFDatabase, *ptpairsFKout);
+    //imageFKin->rejectOutliers(SURFDatabase, *ptpairsFKout);
 
 
 

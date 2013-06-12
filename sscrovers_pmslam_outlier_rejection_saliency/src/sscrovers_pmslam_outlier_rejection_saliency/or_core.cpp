@@ -16,7 +16,7 @@ ORCore::ORCore(ros::NodeHandle *_n)
 
   NVec = SALPointVec();
   NMinusOneVec = SALPointVec();
-  
+  step=0;
 
 
   // Initialise node parameters from launch file or command line.
@@ -67,7 +67,7 @@ void ORCore::process()
     data_completed_f_ = false;
     //filter_keypoints_ptr_->filterKeypoints();
     filter();
-    //publishPtPairs();
+    publishPtPairs();
     //publishDB(); //send data to DB
   }
 }
@@ -82,11 +82,11 @@ void ORCore::publishPtPairs()
   // push forward stamp
   ptpairs_msg_.header.stamp = stamp_;
   // size of data to publish
-  int size = filter_keypoints_ptr_->pt_pairs_.size();
-  // reserve space for data
+  int size = pp.size();
+  //reserve space for data;
   ptpairs_msg_.pairs.resize(size);
   // copy data to message structure
-  memcpy(ptpairs_msg_.pairs.data(), filter_keypoints_ptr_->pt_pairs_.data(), size * sizeof(int)); //change to ptpairs_msg_
+  memcpy(ptpairs_msg_.pairs.data(), pp.data(), size * sizeof(int)); 
   // publish msg
   ptpairs_pub_.publish(ptpairs_msg_);
 
@@ -263,6 +263,12 @@ void ORCore::filter()
 		}
 		SDB.ptpars.push_back(pyVec);
 		SDB.unadjusted.push_back(pyVec);
+
+		for(int p=0; p<NVec.size();p++){
+			vs.push_back(SALPoint(NVec.atX(p), NVec.atY(p), NVec.atW(p), NVec.atH(p), 1,0,step,0));
+			ppm1.push_back(p);
+		}
+		
 	}else{
 		//nearest neighbour
 
@@ -295,19 +301,54 @@ void ORCore::filter()
 			ROS_INFO("i=%i, j=%i, frame=%i",uu ,ppp.j,ppp.frame);
 			ptVec.push_back(ppp);	
 		}
+
+		
+
 		SDB.ptpars.push_back(ptVec);
 		
-		
-		
+		int ppUp=0;
+		int start;
+		for(int e=0;e<NVec.size();e++ ){
+			ptpair plast = outP.at(e);
+			if(plast.frame == -1){
+			//n-1 frame
+				int object = ppm1[plast.j];
+				pp.push_back(object);
+				vs[object].flag = 1;
+				vs[object].step = step;
+				vs[object].n += 1;
+				vs[object].x = NVec.atX(e);
+				vs[object].y = NVec.atY(e);
+				vs[object].height = NVec.atH(e);
+				vs[object].width = NVec.atW(e);
+					
+			}else if(plast.frame == -2){
+			//n-2 frame
+				int object = ppm1[plast.j];
+				pp.push_back(object);
+				vs[object].flag = 1;
+				vs[object].step = step;
+				vs[object].n += 1;
+				vs[object].x = NVec.atX(e);
+				vs[object].y = NVec.atY(e);
+				vs[object].height = NVec.atH(e);
+				vs[object].width = NVec.atW(e);
 
-		
-
+			}else{
+			//new object
+				pp.push_back(vs.size());
+				vs.push_back(SALPoint(NVec.atX(e), NVec.atY(e), NVec.atW(e), NVec.atH(e), 1,0,step,0));
+			}
+		}
 		//push  to publish
 		//ROS_INFO("Conversion Started");
 		//std::vector <SURFPoint> outDB = SDB.convert();
 		//std::vector <int> ptps = SDB.ptpairConverted;
 		
-	}	
+	}
+	ppm2 = ppm1;
+	ppm1 = pp;
+	step++;	
 }
 
 pairInts ORCore::resolve(ptpair p){
@@ -395,17 +436,23 @@ void ORCore::publishDB()
 {
   //ROS_STATIC_ASSERT(sizeof(MyVector3) == 24);
 
-  sscrovers_pmslam_common::DynamicArray serialized_db;
+  sscrovers_pmslam_common::SALVector sal_db;
 
-  serialized_db.header.stamp.nsec = step_;
+  sal_db.header.stamp.nsec = step;
 
-  serialized_db.dims.push_back(db_.storage_->size());
-  serialized_db.dims.push_back(1);
-  serialized_db.types.push_back("SURFPoint");
-  serialized_db.data.resize(sizeof(SURFPoint) * db_.storage_->size());
-  memcpy(serialized_db.data.data(), db_.storage_->data(), serialized_db.dims[0] * sizeof(SURFPoint));
+  sal_db.data.resize(sizeof(sscrovers_pmslam_common::SPoint) * vs.size());
+  for(int i=0; i<vs.size();i++){
+	sal_db.data[i].x = vs[i].x;
+	sal_db.data[i].y = vs[i].y;
+	sal_db.data[i].width = vs[i].width;
+	sal_db.data[i].height = vs[i].height;
+	sal_db.data[i].n = vs[i].n;
+	sal_db.data[i].id = vs[i].id;
+	sal_db.data[i].step = vs[i].step;
+	sal_db.data[i].flag = vs[i].flag;
+  }
 
-  db_pub_.publish(serialized_db);
+  db_pub_.publish(sal_db);
 }
 
 //-----------------------------MAIN-------------------------------

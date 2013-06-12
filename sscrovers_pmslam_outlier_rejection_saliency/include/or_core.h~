@@ -18,6 +18,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <nav_msgs/Path.h>
 #include "sscrovers_pmslam_common/PtPairs.h"
+#include "sscrovers_pmslam_common/SALVector.h"
 #include "sscrovers_pmslam_common/DynamicArray.h"
 #include "sscrovers_pmslam_common/DynamicArrayFeature.h"
 
@@ -64,6 +65,9 @@ public:
   SALPointDB  SDB;
   SALPointVec NVec;
   SALPointVec NMinusOneVec;
+  int step;
+  std::vector <SALPoint> vs;
+  std::vector<int> pp, ppm1,ppm2;
 
 private:
   //! current stamp from subscribed data messages
@@ -126,6 +130,7 @@ private:
   ros::Publisher db_pub_;
   void publishDB();
   ptpairs nearestNeighbour();
+  ptpairs nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in);
   ptpairs outlierRejection(ptpairs inP);
   pairInts resolve(ptpair p);
 

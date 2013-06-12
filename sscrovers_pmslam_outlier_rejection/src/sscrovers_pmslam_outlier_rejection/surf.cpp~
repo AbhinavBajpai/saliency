@@ -28,18 +28,11 @@ int naiveNearestNeighbor(const float* vec, int laplacian, const CvSeq *imageKeyp
   cvStartReadSeq(imageDescriptors, &reader, 0);
 
   for (i = 0; i < imageDescriptors->total; i++)
-  //for( i = 0; i < SURFDatabase->size(); i++ )
   {
     const CvSURFPoint* kp = (const CvSURFPoint*)kreader.ptr;
-    //const CvSURFPoint kp = (*SURFDatabase)[i].pt;
+
     const float* mvec = (const float*)reader.ptr;
-    //float *mvec = new float[64];
 
-    //fillArray(mvec,SURFDatabase,i);
-
-    //float *mvec[64] = &md;
-
-    //const float* mvec = &((*SURFDatabase)[j].descriptor);
     CV_NEXT_SEQ_ELEM( kreader.seq->elem_size, kreader);
     CV_NEXT_SEQ_ELEM( reader.seq->elem_size, reader);
     if (laplacian != kp->laplacian)
