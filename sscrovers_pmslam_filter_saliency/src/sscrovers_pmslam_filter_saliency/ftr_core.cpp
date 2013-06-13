@@ -16,7 +16,7 @@ string convertInt(int number)
 
 FtrCore::FtrCore(ros::NodeHandle *_n)
 {
-  info_filter_ptr_ = new InformationFilterFtr(&step_, &curr_pose_, &db_);
+  info_filter_ptr_ = new InformationFilterFtr();
 
   // Initialise node parameters from launch file or command line.
   // Use a private node handle so that multiple instances of the node can be run simultaneously
@@ -29,7 +29,7 @@ FtrCore::FtrCore(ros::NodeHandle *_n)
   private_node_handle.param("sub_ctrl_vec_topic_name", sub_ctrl_vec_topic_name_, string("ctrl_vec"));
   private_node_handle.param("sub_trajectory_topic_name", sub_trajectory_topic_name_, string("est_traj"));
   private_node_handle.param("sub_ptpairs3d_topic_name", sub_ptpairs3d_topic_name_, string("points3d"));
-  private_node_handle.param("sub_db_topic_name", sub_db_topic_name_, string("temp_db"));
+  private_node_handle.param("sub_db_topic_name", sub_db_topic_name_, string("SAL_db"));
   //!pmslam parameters
   private_node_handle.param("lambda_size", info_filter_ptr_->lambda_size_, int(10000));
   private_node_handle.param("odom_err", info_filter_ptr_->odom_err_, double(0.1));
@@ -74,6 +74,7 @@ void FtrCore::process()
   {
     if (traj_update_f_)
     {
+      info_filter_ptr_->update(step_,curr_pose_,sal_db);
       if (first_frame_f_)
       {
         ROS_INFO("SLAM filter initialisation...");
@@ -187,18 +188,19 @@ void FtrCore::ptpairs3dCallBack(const sscrovers_pmslam_common::PairedPoints3DCon
   }
 }
 
-void FtrCore::featuresDBCallBack(const sscrovers_pmslam_common::DynamicArrayConstPtr& msg)
-{
 
-  if (msg->dims[0] > 0)
+void FtrCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
+{
+  //ROS_INFO("Sal_db found");
+  if (msg.dims > 0)
   {
-    db_.storage_->resize(msg->dims[0]);
-    memcpy(db_.storage_->data(), msg->data.data(), msg->dims[0] * sizeof(SURFPoint));
+    sal_db.resize(msg.dims);
+    memcpy(sal_db.data(), msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
   }
   else
     ROS_ERROR("No data in database topic");
 
-  bool rawdb_to_file_f_ = false;
+  process();
 
 }
 
@@ -207,7 +209,7 @@ void FtrCore::publishDB()
  
 
   //ROS_STATIC_ASSERT(sizeof(MyVector3) == 24);
-
+/*
   sscrovers_pmslam_common::DynamicArray serialized_db;
 
   serialized_db.header.stamp.nsec = step_;
@@ -222,6 +224,7 @@ void FtrCore::publishDB()
   
 
   db_pub_.publish(serialized_db);
+*/
 }
 
 /*

@@ -1,7 +1,6 @@
 #include "information_filter_ftr.h"
 
-InformationFilterFtr::InformationFilterFtr(int* step, RoverState *s, FeaturesDB_t* db) :
-    curr_pose_ptr_(s), step_ptr_(step), db_ptr_(db)
+InformationFilterFtr::InformationFilterFtr() 
 {
   slam_filter_ptr_ = new EIF();
   map3d_ptr_ = new Map();
@@ -11,6 +10,14 @@ InformationFilterFtr::~InformationFilterFtr()
 {
   delete slam_filter_ptr_;
   delete map3d_ptr_;
+}
+
+void InformationFilterFtr::update(int step, RoverState s, std::vector<sscrovers_pmslam_common::SPoint> sVec)
+{
+	curr_pose_ptr_= s;
+	step_ptr_ = step;
+	db_ptr_ = sVec;
+	
 }
 
 void InformationFilterFtr::Init(RoverState* state)
@@ -28,10 +35,10 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
     vector<RoverState> tEST;
   } RoverTrajectory_t;
   RoverTrajectory_t* RoverTrajectory = new RoverTrajectory_t;
-  RoverTrajectory->tEST.resize(*step_ptr_ + 1);
-  RoverTrajectory->tEST[*step_ptr_] = *curr_pose_ptr_;
-  int*STEP = step_ptr_;
-  vector<SURFPoint>* SURFDatabase = db_ptr_->storage_;
+  RoverTrajectory->tEST.resize(step_ptr_ + 1);
+  RoverTrajectory->tEST[step_ptr_] = curr_pose_ptr_;
+  int* STEP = &step_ptr_;
+  vector<sscrovers_pmslam_common::SPoint>* SDatabase = &db_ptr_;
 
   int id;
   vector<CvPoint3D64f> vn, vf;
@@ -56,34 +63,34 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
     CvPoint3D64f temp;
 
     // Split landmarks into new (vn) and re-observed (vf) ones
-    for (unsigned int j = 1; j < ptpairsCMin->size(); j += 2)
+    for (unsigned int j = 0; j < ptpairsCMin->size(); j ++)
     {
 
 
-      temp.x = (*pointsCMin)[(j - 1) / 2].x;
-      temp.y = (*pointsCMin)[(j - 1) / 2].y;
-      temp.z = (*pointsCMin)[(j - 1) / 2].z;
+      temp.x = (*pointsCMin)[j ].x;
+      temp.y = (*pointsCMin)[j ].y;
+      temp.z = (*pointsCMin)[j ].z;
 
-      if ((*SURFDatabase)[(*ptpairsCMin)[j - 1]].id == 0) // if new landmark
+      if ((*SDatabase)[(*ptpairsCMin)[j]].id == 0) // if new landmark
       {
         vn.push_back(temp);
         vrn.push_back(0.001);
 
-        (*SURFDatabase)[(*ptpairsCMin)[j - 1]].id = Map3D->map.size();
-        (*pointsCMin)[(j - 1) / 2].x = (*pointsCMin)[(j - 1) / 2].x + RoverTrajectory->tEST[*STEP].x;
-        (*pointsCMin)[(j - 1) / 2].y = (*pointsCMin)[(j - 1) / 2].y + RoverTrajectory->tEST[*STEP].y;
-        (*pointsCMin)[(j - 1) / 2].z = (*pointsCMin)[(j - 1) / 2].z + RoverTrajectory->tEST[*STEP].z;
+        (*SDatabase)[(*ptpairsCMin)[j]].id = Map3D->map.size();
+        (*pointsCMin)[j].x = (*pointsCMin)[j].x + RoverTrajectory->tEST[*STEP].x;
+        (*pointsCMin)[j].y = (*pointsCMin)[j].y + RoverTrajectory->tEST[*STEP].y;
+        (*pointsCMin)[j].z = (*pointsCMin)[j].z + RoverTrajectory->tEST[*STEP].z;
 
-        Map3D->addLandmark(Landmark(Map3D->map.size(), (*pointsCMin)[(j - 1) / 2], (idx - 3) / 3, 0.05));
+        Map3D->addLandmark(Landmark(Map3D->map.size(), (*pointsCMin)[j], (idx - 3) / 3, 0.05));
 
         idx = idx + 3;
       }
       else
       {
         // Update EIF
-        ids.push_back(Map3D->map[(*SURFDatabase)[(*ptpairsCMin)[j - 1]].id].matPos);
+        ids.push_back(Map3D->map[(*SDatabase)[(*ptpairsCMin)[j]].id].matPos);
 
-        vrf.push_back(Map3D->map[(*SURFDatabase)[(*ptpairsCMin)[j - 1]].id].stddev);
+        vrf.push_back(Map3D->map[(*SDatabase)[(*ptpairsCMin)[j]].id].stddev);
 
 
         vf.push_back(temp);
@@ -108,23 +115,23 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
     // update map
     //#seg fault----------
 
-    for (unsigned int i = 0; i < SURFDatabase->size(); ++i)
+    for (unsigned int i = 0; i < SDatabase->size(); ++i)
     {
-      if (((*SURFDatabase)[i].id > 0) && ((*SURFDatabase)[i].id < (int)Map3D->map.size()))
+      if (((*SDatabase)[i].id > 0) && ((*SDatabase)[i].id < (int)Map3D->map.size()))
       {
         //ROS_INFO("IDIDID: %d\nsizesize: %d",(*SURFDatabase)[i].id, Map3D->map.size());
         //wrong id in database
-        id = Map3D->map[(*SURFDatabase)[i].id].matPos * 3 + 3;
+        id = Map3D->map[(*SDatabase)[i].id].matPos * 3 + 3;
 
-        Map3D->map[(*SURFDatabase)[i].id].position.x = (*slam_filter_ptr_->mu).at<double>(id, 0);
-        Map3D->map[(*SURFDatabase)[i].id].position.y = (*slam_filter_ptr_->mu).at<double>(id + 1, 0);
-        Map3D->map[(*SURFDatabase)[i].id].position.z = (*slam_filter_ptr_->mu).at<double>(id + 2, 0);
+        Map3D->map[(*SDatabase)[i].id].position.x = (*slam_filter_ptr_->mu).at<double>(id, 0);
+        Map3D->map[(*SDatabase)[i].id].position.y = (*slam_filter_ptr_->mu).at<double>(id + 1, 0);
+        Map3D->map[(*SDatabase)[i].id].position.z = (*slam_filter_ptr_->mu).at<double>(id + 2, 0);
 
         // Assigning data to the feature position and gtruth vectors
-        PMSLAM_Data_msg.MapOut.ID.push_back((*SURFDatabase)[i].id);
-        PMSLAM_Data_msg.MapOut.positions.y.push_back(Map3D->map[(*SURFDatabase)[i].id].position.x);
-        PMSLAM_Data_msg.MapOut.positions.x.push_back(Map3D->map[(*SURFDatabase)[i].id].position.y);
-        PMSLAM_Data_msg.MapOut.positions.z.push_back(Map3D->map[(*SURFDatabase)[i].id].position.z);
+        PMSLAM_Data_msg.MapOut.ID.push_back((*SDatabase)[i].id);
+        PMSLAM_Data_msg.MapOut.positions.y.push_back(Map3D->map[(*SDatabase)[i].id].position.x);
+        PMSLAM_Data_msg.MapOut.positions.x.push_back(Map3D->map[(*SDatabase)[i].id].position.y);
+        PMSLAM_Data_msg.MapOut.positions.z.push_back(Map3D->map[(*SDatabase)[i].id].position.z);
       }
     }
   }

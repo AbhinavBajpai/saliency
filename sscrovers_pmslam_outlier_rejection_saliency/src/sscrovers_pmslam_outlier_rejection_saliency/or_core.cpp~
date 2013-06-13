@@ -237,6 +237,12 @@ void ORCore::filter()
 				vs[object].y = NVec.atY(e);
 				vs[object].height = NVec.atH(e);
 				vs[object].width = NVec.atW(e);
+				vs[object].r.x = curr_pose_ptr_->x;
+				vs[object].r.y = curr_pose_ptr_->y;
+				vs[object].r.z = curr_pose_ptr_->z;
+				vs[object].r.yaw = curr_pose_ptr_->yaw;
+				vs[object].r.pitch = curr_pose_ptr_->pitch;
+				vs[object].r.roll = curr_pose_ptr_->roll;
 					
 			}else if(plast.frame == -2){
 			//n-2 frame
@@ -249,6 +255,12 @@ void ORCore::filter()
 				vs[object].y = NVec.atY(e);
 				vs[object].height = NVec.atH(e);
 				vs[object].width = NVec.atW(e);
+				vs[object].r.x = curr_pose_ptr_->x;
+				vs[object].r.y = curr_pose_ptr_->y;
+				vs[object].r.z = curr_pose_ptr_->z;
+				vs[object].r.yaw = curr_pose_ptr_->yaw;
+				vs[object].r.pitch = curr_pose_ptr_->pitch;
+				vs[object].r.roll = curr_pose_ptr_->roll;
 
 			}else{
 			//new object
@@ -262,6 +274,12 @@ void ORCore::filter()
 				sp.y = NVec.atY(e);
 				sp.height = NVec.atH(e);
 				sp.width = NVec.atW(e);
+				sp.r.x = curr_pose_ptr_->x;
+				sp.r.y = curr_pose_ptr_->y;
+				sp.r.z = curr_pose_ptr_->z;
+				sp.r.yaw = curr_pose_ptr_->yaw;
+				sp.r.pitch = curr_pose_ptr_->pitch;
+				sp.r.roll = curr_pose_ptr_->roll;
 				vs.push_back(sp);
 			}
 		}
