@@ -1,3 +1,4 @@
 #SALPoint Vec
 Header header
-SPoint[] data
+int32 dims
+#SPoint[] data

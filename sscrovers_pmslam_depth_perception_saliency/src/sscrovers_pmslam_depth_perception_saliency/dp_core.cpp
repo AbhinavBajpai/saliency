@@ -116,7 +116,6 @@ void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
   {
     sal_db.resize(msg.dims);
     memcpy(&sal_db, msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
-    dbTest = true;
   }
   else
     ROS_ERROR("No data in database topic");

@@ -107,7 +107,7 @@ void ORCore::featuresCallback(const geometry_msgs::PoseArray& msg)
 }
 
 ptpairs ORCore::nearestNeighbour(){
-	ROS_INFO("NN begin N = %i, N-1 = %i",NVec.size(),NMinusOneVec.size());
+	//ROS_INFO("NN begin N = %i, N-1 = %i",NVec.size(),NMinusOneVec.size());
 	int closest;
 	ptpairs ptpairs_local;
 	float dmin;	
@@ -130,14 +130,14 @@ ptpairs ORCore::nearestNeighbour(){
 		
 		ptpairs_local.add(closest,dmin,framee);
 	}
-	ROS_INFO("NN End");
+	//ROS_INFO("NN End");
 	return ptpairs_local;
 }
 
 
 ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
 //TODO fix only points to unused points from n-1 frame
-	ROS_INFO("NN2 begin");
+	//ROS_INFO("NN2 begin");
 	int closest;
 	ptpairs ptpairs_local;
 	float dmin;	
@@ -166,7 +166,7 @@ ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
 		}
 
 	}
-	ROS_INFO("NN2 End");
+	//ROS_INFO("NN2 End");
 	return ptpairs_local;
 }
 
@@ -316,16 +316,17 @@ void ORCore::publishDB()
 
 		sal_db.header.stamp.nsec = step;
 		sal_db.dims = vs.size();
-		sal_db.data.resize(sizeof(sscrovers_pmslam_common::SPoint) * vs.size());
+		sal_db.data.resize(vs.size());
 		memcpy(sal_db.data.data(), vs.data(), sizeof(sscrovers_pmslam_common::SPoint) * vs.size()); 
+		//for(int d=0;d<vs.size();d++){
+		//	sal_db.data[d] = vs[d];
+		//}
 
 		//for(int l=0; l<sal_db.dims;l++){
 		//	ROS_INFO("x= %f, y= %f", sal_db.data[l].x,sal_db.data[l].y);
 		//}
 
-		sscrovers_pmslam_common::SALVector sdb = sal_db;
-
-		db_pub_.publish(sdb);
+		db_pub_.publish(sal_db);
 	}
 }
 

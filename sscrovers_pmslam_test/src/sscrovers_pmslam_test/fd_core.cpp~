@@ -63,14 +63,13 @@ void FDCore::imageCallBack(const sensor_msgs::ImageConstPtr& msg)
   try
   {
     cv_input_img_ptr_ = cv_bridge::toCvCopy(msg, enc::MONO8);
+    ROS_INFO("image found");
   }
   catch (cv_bridge::Exception& e)
   {
     ROS_ERROR("cv_bridge exception: %s", e.what());
     return;
   }
-
-  process();
 }
 
 
@@ -87,18 +86,28 @@ void FDCore::process()
 
 void FDCore::editImage()
 {
+	ROS_INFO("Edit Image");
+
+	cv_output_img_ptr_->header.stamp = cv_input_img_ptr_->header.stamp;
+	cv::cvtColor(cv_input_img_ptr_->image, cv_output_img_ptr_->image, CV_GRAY2BGR);
+
 	for(int m=0; m<ptpairs_msg_.pairs.size();m++){
 		float x = sal_db[ptpairs_msg_.pairs[m]].x;
 		float y = sal_db[ptpairs_msg_.pairs[m]].y;
+		float width = sal_db[ptpairs_msg_.pairs[m]].width /2;
+		float height = sal_db[ptpairs_msg_.pairs[m]].height /2;
+		int no = ptpairs_msg_.pairs[m];
+		cv::putText(cv_output_img_ptr_->image,std::to_string(no), cv::Point(int(x),int(y)),cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar(255,0,0), 2 );
+		cv::rectangle(cv_output_img_ptr_->image, cv::Point(x-width,y-height), cv::Point(x+width,x+height), cv::Scalar(0,255,0));
+		
 	}
-  //cv_input_img_ptr_ 
 }
 
 
 void FDCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg)
 {
-  step_ = msg->header.stamp.nsec;
   ptpairs_msg_ = *msg;
+  ROS_INFO("point pairs found");
 }
 
 void FDCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
@@ -107,35 +116,23 @@ void FDCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
   if (msg.dims > 0)
   {
     sal_db.resize(msg.dims);
-    memcpy(&sal_db, msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
+    memcpy(sal_db.data(), msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
+    ROS_INFO("features DB found");
   }
   else
     ROS_ERROR("No data in database topic");
 
+
+  process();
 }
 
 void FDCore::publishImage()
 {
-  cv_output_img_ptr_->header.stamp = cv_input_img_ptr_->header.stamp;
-
-  cv::cvtColor(cv_input_img_ptr_->image, cv_output_img_ptr_->image, CV_GRAY2BGR);
-
+ROS_INFO("Publish Image");
  
-    for (int i = 0; i < keypoints_->total; i++)
-    {
-      CvSURFPoint* r = (CvSURFPoint*)cvGetSeqElem(keypoints_, i);
-      CvPoint center;
-      int radius;
-      center.x = cvRound(r->pt.x);
-      center.y = cvRound(r->pt.y);
-      radius = cvRound(r->size * 1.2 / 9. * 2);
-      cv::circle(cv_output_img_ptr_->image, center, radius, cvScalar(0, 255, 0), 1, 8, 0);
-    }
-
     cv::imshow(WINDOW, cv_output_img_ptr_->image);
     cv::waitKey(3);
-  
-
+ 
 }
 
 
@@ -150,6 +147,8 @@ int main(int argc, char **argv)
   FDCore* __attribute__((unused)) fd_core_ptr_ = new FDCore(&n);
 
   ros::spin();
+
+  fd_core_ptr_->process();
 
   return 0;
 } // end main()

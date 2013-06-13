@@ -115,7 +115,7 @@ void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
   if (msg.dims > 0)
   {
     sal_db.resize(msg.dims);
-    memcpy(&sal_db, &msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
+    memcpy(&sal_db, msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
     dbTest = true;
   }
   else
