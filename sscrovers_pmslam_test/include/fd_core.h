@@ -19,6 +19,7 @@
 
 //ros messages
 #include <sensor_msgs/image_encodings.h>
+#include "sensor_msgs/fill_image.h"
 #include <geometry_msgs/PoseStamped.h>
 #include "sscrovers_pmslam_common/SALVector.h"
 #include "sscrovers_pmslam_common/SPoint.h"

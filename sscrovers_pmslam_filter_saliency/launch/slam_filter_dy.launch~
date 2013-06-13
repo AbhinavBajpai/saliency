@@ -1,0 +1,9 @@
+<launch>
+	<node pkg="sscrovers_pmslam_filter" type="ftr_node" name="slam_filter" output="screen">
+<!--node pkg="sscrovers_pmslam_filter" type="ftr_node" name="slam_filter"-->
+      <!-- frequency rate of node -->
+      <param name="rate" value="1.0" />
+
+    </node>
+</launch>
+	

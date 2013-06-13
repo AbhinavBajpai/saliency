@@ -40,7 +40,7 @@ FDCore::FDCore(ros::NodeHandle *_n) :
   features_db_sub_ = _n->subscribe(sub_db_topic_name_.c_str(), 1, &FDCore::featuresDBCallBack, this);
 
   //publisher
-  //image_pub_ = it_.advertise("test", 1);
+  image_pub_ = it_.advertise("test", 1);
 
   //initialize empty images
   cv_input_img_ptr_.reset(new cv_bridge::CvImage);
@@ -133,9 +133,12 @@ void FDCore::publishImage()
 {
 //ROS_INFO("Publish Image");
  
-    cv::imshow(WINDOW, cv_output_img_ptr_->image);
-    cv::waitKey(3);
-    //image_pub_.publish(cv_output_img_ptr_->toImageMsg());
+    //cv::imshow(WINDOW, cv_output_img_ptr_->image);
+    //cv::waitKey(3);
+    cv::Mat image2_ = cv_output_img_ptr_->image;
+    sensor_msgs::Image salmap_;
+    fillImage(salmap_, "bgr8",image2_.rows, image2_.cols, image2_.step, const_cast<uint8_t*>(image2_.data));
+    image_pub_.publish(salmap_);
  
 }
 
