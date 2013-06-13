@@ -28,8 +28,6 @@ DPCore::DPCore(ros::NodeHandle *_n)
   //! subscribers
   ptpairs_sub_ = _n->subscribe(sub_pt_topic_name_.c_str(), 1, &DPCore::ptpairsCallBack, this);
   trajectory_sub_ = _n->subscribe(sub_traj_topic_name_.c_str(), 1, &DPCore::trajectoryCallBack, this);
-  features_db_sub_ = _n->subscribe(sub_db_topic_name_.c_str(), 1, &DPCore::featuresDBCallBack, this);
-  features_sub_ = _n->subscribe(sub_features_topic_name_.c_str(), 1, &DPCore::featuresCallBack, this);
 
 
   //pmslam functional module
@@ -47,7 +45,7 @@ void DPCore::process()
   //put here everything that should run with node
   if (step_ >= 0)
   {
-    if ((est_traj_msg_.poses.size() >= ptpairs_msg_.header.stamp.nsec) && (!db_.storage_->empty()))
+    if ((est_traj_msg_.poses.size() >= ptpairs_msg_.header.stamp.nsec) && dbTest)
     {
       double _rng = 10;
       int px = 320;
@@ -58,77 +56,12 @@ void DPCore::process()
       double tilt = 45.0;
       double CamH = 0.52;
 
-      direct_depth_ptr_->directDepth(db_.storage_, ptpairs_msg_.pairs, pt_pairs_out_, &curr_pose_, points3d_, _rng, px,
+      direct_depth_ptr_->directDepth(&sal_db, ptpairs_msg_.pairs, pt_pairs_out_, &curr_pose_, points3d_, _rng, px,
                                      py, VFOV, HFOV, pan, tilt, CamH);
+	dbTest=false;
     }
   }
   publishPoints3D();
-}
-
-void DPCore::featuresCallBack(const sscrovers_pmslam_common::DynamicArrayConstPtr& msg)
-{
-  //step_ = msg->header.stamp.nsec;
-
-  unsigned int kp_size = msg->dims[0] * msg->dims[1] * sizeof(CvSURFPoint);
-  //unsigned int ds_size = msg->dims[0] * msg->dims[2] * sizeof(float);
-
-  CvMemStorage *mem_storage_kp = cvCreateMemStorage(0);
-  direct_depth_ptr_->keypoints_ptr_ = cvCreateSeq(0, sizeof(CvSeq), sizeof(CvSURFPoint), mem_storage_kp);
-  cvSeqPushMulti(direct_depth_ptr_->keypoints_ptr_, (CvSURFPoint*)&msg->data[0], msg->dims[0]);
-
-  CvMemStorage *mem_storage_dscp = cvCreateMemStorage(0);
-  direct_depth_ptr_->descriptors_ptr_ = cvCreateSeq(0, sizeof(CvSeq), sizeof(float) * msg->dims[2], mem_storage_dscp);
-
-  typedef struct float64
-  {
-    float x[64];
-  } float64;
-  cvSeqPushMulti(direct_depth_ptr_->descriptors_ptr_, (float64*)(&msg->data[0] + kp_size), msg->dims[0]);
-
-  if (features_to_file_f_)
-  {
-    //store keypoints to file
-    stringstream _a1;
-    _a1 << msg->header.stamp.nsec;
-    string filename1 = "/home/sscrovers/pm_output/dp_keypoints_" + _a1.str() + ".log";
-    std::ofstream file1;
-    file1.open(filename1.c_str());
-    //put if here!!
-    file1 << "total: " << direct_depth_ptr_->keypoints_ptr_->total << endl;
-    file1 << "#\tpt.x\tpt.y\tlap\tsize\tdir\thess" << endl;
-    for (int i = 0; i < direct_depth_ptr_->keypoints_ptr_->total; i++)
-    {
-      CvSURFPoint * r = (CvSURFPoint*)cvGetSeqElem(direct_depth_ptr_->keypoints_ptr_, i);
-      file1 << i << ": \t" << r->pt.x << "\t" << r->pt.y << "\t" << r->laplacian << "\t" << r->size << "\t" << r->dir
-          << "\t" << r->hessian << "\t" << endl;
-    }
-    file1.close();
-  }
-
-  if (features_to_file_f_)
-  {
-    //store descriptors to file
-    stringstream _a;
-    _a << msg->header.stamp.nsec;
-    string filename = "/home/sscrovers/pm_output/dp_descriptors_" + _a.str() + ".log";
-    std::ofstream file;
-    file.open(filename.c_str());
-    //put if here!!
-    file << "total: " << direct_depth_ptr_->descriptors_ptr_->total << endl;
-    file << "#\tpt.x\tpt.y\tlap\tsize\tdir\thess" << endl;
-    int _s = direct_depth_ptr_->descriptors_ptr_->elem_size / sizeof(float);
-    for (int i = 0; i < direct_depth_ptr_->descriptors_ptr_->total; i++)
-    {
-      float* r = (float*)cvGetSeqElem(direct_depth_ptr_->descriptors_ptr_, i);
-      file << i << ": ";
-      for (int j = 0; j < _s; j++)
-      {
-        file << "\t" << r[j];
-      }
-      file << endl;
-    }
-    file.close();
-  }
 }
 
 void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
@@ -166,43 +99,7 @@ void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
       //data_completed_f_ = false;
     }
 
-    if (traj_to_file_f_)
-    {
-      //!!!split this to function for trajectory and point!!!
-      //store trajectory to file
-      stringstream _a;
-      _a << msg->header.stamp.nsec;
-      string filename = "/home/sscrovers/pm_output/dp_esttraj_" + _a.str() + ".log";
-      std::ofstream file;
-      file.open(filename.c_str());
-      //put if here!!
-      file << "total: " << est_traj_msg_.poses.size() << endl;
-      file << "current pt: #" << step_ << "\tx=" << curr_pose_.x << "\ty=" << curr_pose_.y << "\tz=" << curr_pose_.z
-          << "\tr=" << curr_pose_.roll << "\tp=" << curr_pose_.pitch << "\ty=" << curr_pose_.yaw << endl << endl;
-      file << "#\tx\ty\tz\tq1\tq2\tq3\tq4\t\troll\tpitch\tyaw" << endl;
-      for (unsigned int i = 0; i < est_traj_msg_.poses.size(); i++)
-      {
-        double _roll, _pitch, _yaw;
-#if ROS_VERSION_MINIMUM(1, 8, 0) // if current ros version is >= 1.8.0 (fuerte)
-        //min. fuerte
-        tf::Quaternion _q;
-        tf::quaternionMsgToTF(est_traj_msg_.poses[i].pose.orientation, _q);
-        tf::Matrix3x3(_q).getRPY(_roll, _pitch, _yaw);
-#else
-        //electric and older
-        btQuaternion _q;
-        tf::quaternionMsgToTF(est_traj_msg_.poses[i].pose.orientation, _q);
-        btMatrix3x3(_q).getRPY(_roll, _pitch, _yaw);
-#endif
-
-        file << i << ": " << est_traj_msg_.poses[i].pose.position.x << "\t" << est_traj_msg_.poses[i].pose.position.y
-            << "\t" << est_traj_msg_.poses[i].pose.position.z << "\t" << est_traj_msg_.poses[i].pose.orientation.x
-            << "\t" << est_traj_msg_.poses[i].pose.orientation.y << "\t" << est_traj_msg_.poses[i].pose.orientation.z
-            << "\t" << est_traj_msg_.poses[i].pose.orientation.w << "\t" << _roll << "\t" << _pitch << "\t" << _yaw
-            << endl;
-      }
-      file.close();
-    }
+    
   }
 }
 
@@ -212,13 +109,14 @@ void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg
   ptpairs_msg_ = *msg;
 }
 
-void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::DynamicArrayConstPtr& msg)
+void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
 {
 
-  if (msg->dims[0] > 0)
+  if (msg.dims > 0)
   {
-    db_.storage_->resize(msg->dims[0]);
-    memcpy(db_.storage_->data(), msg->data.data(), msg->dims[0] * sizeof(SURFPoint));
+    sal_db.resize(msg.dims);
+    memcpy(&sal_db, &msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
+    dbTest = true;
   }
   else
     ROS_ERROR("No data in database topic");

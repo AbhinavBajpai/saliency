@@ -26,7 +26,7 @@ public:
   DirectDepthDP();
   virtual ~DirectDepthDP();
 
-  void directDepth(std::vector<sscrovers_pmslam_common::SPoint>* SDatabase, vector<int>& ptpairsin, vector<int>& ptpairsout, RoverState *state,
+  void directDepth(vector<sscrovers_pmslam_common::SPoint>* SDatabase, vector<int>& ptpairsin, vector<int>& ptpairsout, RoverState *state,
                    vector<CvPoint3D64f> &points3D, double rng, int px, int py, double VFOV, double HFOV, double pan,
                    double tilt, double CamH);
 

@@ -56,7 +56,7 @@ void DirectDepthDP::directDepth(std::vector<sscrovers_pmslam_common::SPoint>* SD
   for (unsigned int j = 0; j < ptpairsin.size(); j ++)
   {
     //CvSURFPoint* r = (CvSURFPoint*)cvGetSeqElem(keypoints, ptpairsin[j]);
-    sscrovers_pmslam_common::SPoint ss = SDatabase->at(ptpairsin[j]);
+    sscrovers_pmslam_common::SPoint ss = SDatabase[ptpairsin[j]];
 
     u = ss.x / px;
     v = ss.y / py;

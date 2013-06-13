@@ -49,7 +49,7 @@ public:
 
   //!Everything in this function is processed in node loop
   void process();
-  std::vector <sscrovers_pmslam_common::SPoint> sal_db;
+  sscrovers_pmslam_common::SALVector sal_db;
   bool dbTest;
 private:
   //! save to file flags

@@ -82,14 +82,14 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/features_db.cpp
  )
 
- add_executable(dp_node_dy_s
-	src/${PROJECT_NAME}/dp_core_dy.cpp
-	src/${PROJECT_NAME}/direct_depth_dp.cpp
-	src/${PROJECT_NAME}/triangulate_dp.cpp
-	src/${PROJECT_NAME}/RoverState.cpp
-	src/${PROJECT_NAME}/SURFPoint.cpp
-	src/${PROJECT_NAME}/features_db.cpp
- )
+ #add_executable(dp_node_dy_s
+#	src/${PROJECT_NAME}/dp_core_dy.cpp
+#	src/${PROJECT_NAME}/direct_depth_dp.cpp
+#	src/${PROJECT_NAME}/triangulate_dp.cpp
+#	src/${PROJECT_NAME}/RoverState.cpp
+#	src/${PROJECT_NAME}/SURFPoint.cpp
+#	src/${PROJECT_NAME}/features_db.cpp
+ #)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -99,9 +99,9 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
  target_link_libraries(dp_node_s
    ${catkin_LIBRARIES}
  )
- target_link_libraries(dp_node_dy_s
-   ${catkin_LIBRARIES}
- )
+ #target_link_libraries(dp_node_dy_s
+  # ${catkin_LIBRARIES}
+ #)
 
 #############
 ## Install ##

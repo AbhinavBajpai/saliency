@@ -249,6 +249,7 @@ void ORCore::filter()
 				sp.flag = 1;
 				sp.step = step;
 				sp.n = 1;
+				sp.id = step;
 				sp.x = NVec.atX(e);
 				sp.y = NVec.atY(e);
 				sp.height = NVec.atH(e);

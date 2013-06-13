@@ -28,8 +28,6 @@ DPCore::DPCore(ros::NodeHandle *_n)
   //! subscribers
   ptpairs_sub_ = _n->subscribe(sub_pt_topic_name_.c_str(), 1, &DPCore::ptpairsCallBack, this);
   trajectory_sub_ = _n->subscribe(sub_traj_topic_name_.c_str(), 1, &DPCore::trajectoryCallBack, this);
-  features_db_sub_ = _n->subscribe(sub_db_topic_name_.c_str(), 1, &DPCore::featuresDBCallBack, this);
-  features_sub_ = _n->subscribe(sub_features_topic_name_.c_str(), 1, &DPCore::featuresCallBack, this);
 
 
   //pmslam functional module
@@ -47,7 +45,7 @@ void DPCore::process()
   //put here everything that should run with node
   if (step_ >= 0)
   {
-    if ((est_traj_msg_.poses.size() >= ptpairs_msg_.header.stamp.nsec) && (!db_.storage_->empty()))
+    if ((est_traj_msg_.poses.size() >= ptpairs_msg_.header.stamp.nsec) && dbTest)
     {
       double _rng = 10;
       int px = 320;
@@ -58,33 +56,12 @@ void DPCore::process()
       double tilt = 45.0;
       double CamH = 0.52;
 
-      direct_depth_ptr_->directDepth(db_.storage_, ptpairs_msg_.pairs, pt_pairs_out_, &curr_pose_, points3d_, _rng, px,
+      direct_depth_ptr_->directDepth(&sal_db, ptpairs_msg_.pairs, pt_pairs_out_, &curr_pose_, points3d_, _rng, px,
                                      py, VFOV, HFOV, pan, tilt, CamH);
+	dbTest=false;
     }
   }
   publishPoints3D();
-}
-
-void DPCore::featuresCallBack(const sscrovers_pmslam_common::DynamicArrayConstPtr& msg)
-{
-  //step_ = msg->header.stamp.nsec;
-
-  unsigned int kp_size = msg->dims[0] * msg->dims[1] * sizeof(CvSURFPoint);
-  //unsigned int ds_size = msg->dims[0] * msg->dims[2] * sizeof(float);
-
-  CvMemStorage *mem_storage_kp = cvCreateMemStorage(0);
-  direct_depth_ptr_->keypoints_ptr_ = cvCreateSeq(0, sizeof(CvSeq), sizeof(CvSURFPoint), mem_storage_kp);
-  cvSeqPushMulti(direct_depth_ptr_->keypoints_ptr_, (CvSURFPoint*)&msg->data[0], msg->dims[0]);
-
-  CvMemStorage *mem_storage_dscp = cvCreateMemStorage(0);
-  direct_depth_ptr_->descriptors_ptr_ = cvCreateSeq(0, sizeof(CvSeq), sizeof(float) * msg->dims[2], mem_storage_dscp);
-
-  typedef struct float64
-  {
-    float x[64];
-  } float64;
-  cvSeqPushMulti(direct_depth_ptr_->descriptors_ptr_, (float64*)(&msg->data[0] + kp_size), msg->dims[0]);
-
 }
 
 void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
@@ -132,13 +109,14 @@ void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg
   ptpairs_msg_ = *msg;
 }
 
-void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::DynamicArrayConstPtr& msg)
+void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
 {
 
-  if (msg->dims[0] > 0)
+  if (msg.dims > 0)
   {
-    db_.storage_->resize(msg->dims[0]);
-    memcpy(db_.storage_->data(), msg->data.data(), msg->dims[0] * sizeof(SURFPoint));
+    sal_db.resize(msg.dims);
+    memcpy(&sal_db, msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
+    dbTest = true;
   }
   else
     ROS_ERROR("No data in database topic");
