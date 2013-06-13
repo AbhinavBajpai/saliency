@@ -12,7 +12,7 @@ ORCore::ORCore(ros::NodeHandle *_n)
 {
   step_ = 1;
   curr_pose_ptr_ = new RoverState;
-  filter_keypoints_ptr_ = new FilterKeypointsOR(&step_, curr_pose_ptr_, &db_);
+
 
   NVec = SALPointVec();
   NMinusOneVec = SALPointVec();
@@ -28,18 +28,12 @@ ORCore::ORCore(ros::NodeHandle *_n)
   private_node_handle.param("output_features_topic_name", sub_features_topic_name_, string("/saliency/features_Hou"));
   private_node_handle.param("sub_trajectory_topic_name", sub_trajectory_topic_name_, string("est_traj"));
   private_node_handle.param("pub_ptpairs_topic_name", pub_ptpairs_topic_name_, string("ptpairs"));
-  //camera params - TODO from camera info?, camera image? param server?
-  private_node_handle.param("px", filter_keypoints_ptr_->px_, int(320));
-  private_node_handle.param("py", filter_keypoints_ptr_->py_, int(240));
-  //pmslam params
-  private_node_handle.param("lm_track", filter_keypoints_ptr_->lm_track_, int(94));
-  private_node_handle.param("scale", filter_keypoints_ptr_->scale_, int(1));
+
   // debug flags
   private_node_handle.param("features_to_file", features_to_file_f_, bool(false));
   private_node_handle.param("ptpoints_to_file", ptpoints_to_file_f_, bool(false));
   private_node_handle.param("db_to_file", db_to_file_f_, bool(false));
   private_node_handle.param("traj_to_file", traj_to_file_f_, bool(false));
-
 
 
   //subscribers
@@ -48,7 +42,7 @@ ORCore::ORCore(ros::NodeHandle *_n)
 
   //publishers
   ptpairs_pub_ = _n->advertise<sscrovers_pmslam_common::PtPairs>(pub_ptpairs_topic_name_.c_str(), 1);
-  db_pub_ = _n->advertise<sscrovers_pmslam_common::DynamicArray>("temp_db", 1);
+  db_pub_ = _n->advertise<sscrovers_pmslam_common::SALVector>("SAL_db", 1);
 
   data_completed_f_ = false;
 }
@@ -65,7 +59,7 @@ void ORCore::process()
   if ((data_completed_f_) && (step_ > 0))
   {
     data_completed_f_ = false;
-    //filter_keypoints_ptr_->filterKeypoints();
+
     filter();
     publishPtPairs();
     publishDB(); //send data to DB
@@ -120,7 +114,7 @@ ptpairs ORCore::nearestNeighbour(){
 	float d, area, areaMO;
 	int framee;
 	for(int i = 0; i<NVec.size(); i++){
-		dmin=10000;
+		dmin=32;
 		closest=i;
 		framee = 0;
 		for(int j=0; j<NMinusOneVec.size(); j++){
@@ -148,20 +142,23 @@ ptpairs ORCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
 	ptpairs ptpairs_local;
 	float dmin;	
 	float d, area, areaMO;
+	int framee;
 	for(int i = 0; i<N.size(); i++){
-		dmin=10000;
+		dmin=32;
 		closest=i;
+		framee=0;
 		if(in.atFrame(i)==0){
 			for(int j=0; j<NM2.size(); j++){
 				d = NM2.at(j).dist(N.at(i));
 				area = N.at(i).height * N.at(i).width;
 				areaMO = NM2.at(j).width * NM2.at(j).height;
-				if(d<dmin && area < 4*areaMO && 4 * area > areaMO ){
+				if(d<dmin && area < 4*areaMO && 4 * area > areaMO){
 					dmin=d;
 					closest = j;
+					framee=-2;
 				}
 			}
-			ptpairs_local.add(closest,dmin,-2);
+			ptpairs_local.add(closest,dmin,framee);
 		}else{
 			dmin = in.atD(i);
 			closest = in.atJ(i);
@@ -197,7 +194,7 @@ void ORCore::filter()
 			vs.push_back(sp);
 
 			vs.push_back(sp);
-			ppm1.push_back(p);
+			pp.push_back(p);
 		}
 		
 	}else{
@@ -212,10 +209,14 @@ void ORCore::filter()
 
 		//move database
 
+		//for(int l=0;l<outP.size();l++){
+		//	ROS_INFO("%i, %i, frame= %i, d= %f",outP.pairs[l].i, outP.pairs[l].j, outP.pairs[l].frame, outP.pairs[l].d);
+		//}
+
 		NMinusTwoVec = NMinusOneVec;
 		NMinusOneVec = NVec;
-
-
+		pp.clear();
+		//ROS_INFO("Conversion Started");
 		for(int e=0;e<NVec.size();e++ ){
 			ptpair plast = outP.at(e);
 			if(plast.frame == -1){
@@ -249,6 +250,7 @@ void ORCore::filter()
 				sp.flag = 1;
 				sp.step = step;
 				sp.n = 1;
+				sp.id = step;
 				sp.x = NVec.atX(e);
 				sp.y = NVec.atY(e);
 				sp.height = NVec.atH(e);
@@ -261,12 +263,13 @@ void ORCore::filter()
 	ppm2 = ppm1;
 	ppm1 = pp;
 	step++;	
+	step_++;
 }
 
 
 void ORCore::trajectoryCallback(const nav_msgs::PathConstPtr& msg)
 {
-
+  curr_pose_ptr_ = new RoverState;
   est_traj_msg_ = *msg;
   if (step_ >= 0)
   {
@@ -308,14 +311,22 @@ void ORCore::trajectoryCallback(const nav_msgs::PathConstPtr& msg)
 
 void ORCore::publishDB()
 {
-  sscrovers_pmslam_common::SALVector sal_db;
+	if(vs.size()>0){
+		sscrovers_pmslam_common::SALVector sal_db;
 
-  sal_db.header.stamp.nsec = step;
+		sal_db.header.stamp.nsec = step;
+		sal_db.dims = vs.size();
+		sal_db.data.resize(sizeof(sscrovers_pmslam_common::SPoint) * vs.size());
+		memcpy(sal_db.data.data(), vs.data(), sizeof(sscrovers_pmslam_common::SPoint) * vs.size()); 
 
-  sal_db.data.resize(sizeof(sscrovers_pmslam_common::SPoint) * vs.size());
-  memcpy(sal_db.data.data(), vs.data(), sizeof(sscrovers_pmslam_common::SPoint) * vs.size()); 
+		for(int l=0; l<sal_db.dims;l++){
+			ROS_INFO("x= %f, y= %f", sal_db.data[l].x,sal_db.data[l].y);
+		}
 
-  db_pub_.publish(sal_db);
+		sscrovers_pmslam_common::SALVector sdb = sal_db;
+
+		db_pub_.publish(sdb);
+	}
 }
 
 //-----------------------------MAIN-------------------------------

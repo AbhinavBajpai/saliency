@@ -1,6 +1,6 @@
 #ifndef SALPOINT_H
 #define SALPOINT_H
-
+#include <math.h> 
 
 class SALPoint{
 
@@ -39,7 +39,7 @@ class SALPoint{
 		}
 		
 		float dist(SALPoint s){
-			return (x-s.x)*(x-s.x)+(y-s.y)*(y-s.y);
+			return sqrt((x-s.x)*(x-s.x)+(y-s.y)*(y-s.y));
 		}
 
 };
