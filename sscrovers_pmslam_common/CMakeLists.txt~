@@ -36,7 +36,7 @@ find_package(catkin REQUIRED COMPONENTS angles cv_bridge geometry_msgs image_tra
    PtPairs.msg
    Trajectory.msg
    Trajectory_old.msg
-   SALPoint.msg
+   SPoint.msg
    SALVector.msg
  )
 

@@ -16,7 +16,7 @@ DPCore::DPCore(ros::NodeHandle *_n)
   private_node_handle.param("sub_traj_topic_name", sub_traj_topic_name_, string("est_traj"));
   private_node_handle.param("sub_pt_topic_name", sub_pt_topic_name_, string("ptpairs"));
   private_node_handle.param("pub_pt_topic_name", pub_pt_topic_name_, string("points3d"));
-  private_node_handle.param("sub_db_topic_name", sub_db_topic_name_, string("temp_db"));
+  private_node_handle.param("sub_db_topic_name", sub_db_topic_name_, string("sal_db"));
   private_node_handle.param("sub_features_topic_name", sub_features_topic_name_, string("features"));
   //! save to file flags
   private_node_handle.param("traj_to_file", traj_to_file_f_, bool(false));
@@ -28,7 +28,7 @@ DPCore::DPCore(ros::NodeHandle *_n)
   //! subscribers
   ptpairs_sub_ = _n->subscribe(sub_pt_topic_name_.c_str(), 1, &DPCore::ptpairsCallBack, this);
   trajectory_sub_ = _n->subscribe(sub_traj_topic_name_.c_str(), 1, &DPCore::trajectoryCallBack, this);
-
+  features_db_sub_ = _n->subscribe("SAL_db", 1, &DPCore::featuresDBCallBack, this);
 
   //pmslam functional module
   direct_depth_ptr_ = new DirectDepthDP();
@@ -66,6 +66,7 @@ void DPCore::process()
 
 void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
 {
+  ROS_INFO("trajectory found");
   est_traj_msg_ = *msg;
   if (step_ >= 0)
   {
@@ -107,19 +108,21 @@ void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg
 {
   step_ = msg->header.stamp.nsec;
   ptpairs_msg_ = *msg;
+  ROS_INFO("ptpairs found");
 }
 
 void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
 {
-
+  ROS_INFO("Sal_db found");
   if (msg.dims > 0)
   {
     sal_db.resize(msg.dims);
-    memcpy(&sal_db, msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
-    dbTest = true;
+    memcpy(sal_db.data(), msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
   }
   else
     ROS_ERROR("No data in database topic");
+
+  process();
 
 }
 
@@ -161,8 +164,6 @@ int main(int argc, char **argv)
     //dp_core->Publish();
     ros::spinOnce();
     r.sleep();
-
-    dp_core->process();
 
   }
 

@@ -94,8 +94,7 @@ private:
   //! callback for image subscribing
   void imageCallBack(const sensor_msgs::ImageConstPtr& msg);
 
-  //! Callback function for rover trajectory subscription.
-  void trajectoryCallBack(const nav_msgs::PathConstPtr& msg);
+  void ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg);
 
   //! Callback function for features database subscription.
   void featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg);

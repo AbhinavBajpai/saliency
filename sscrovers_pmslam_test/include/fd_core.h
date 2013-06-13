@@ -55,6 +55,9 @@ private:
   //! publish image with marked features
   bool pub_output_image_f_;
 
+  //! image publisher
+  image_transport::Publisher image_pub_;
+
   //! name for topics
   std::string in_img_topic_name_, out_img_topic_name_, out_features_topic_name_;
 

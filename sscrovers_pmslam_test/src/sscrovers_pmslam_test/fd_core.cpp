@@ -39,6 +39,9 @@ FDCore::FDCore(ros::NodeHandle *_n) :
   ptpairs_sub_ = _n->subscribe(sub_pt_topic_name_.c_str(), 1, &FDCore::ptpairsCallBack, this);
   features_db_sub_ = _n->subscribe(sub_db_topic_name_.c_str(), 1, &FDCore::featuresDBCallBack, this);
 
+  //publisher
+  //image_pub_ = it_.advertise("test", 1);
+
   //initialize empty images
   cv_input_img_ptr_.reset(new cv_bridge::CvImage);
   cv_output_img_ptr_.reset(new cv_bridge::CvImage);
@@ -63,7 +66,7 @@ void FDCore::imageCallBack(const sensor_msgs::ImageConstPtr& msg)
   try
   {
     cv_input_img_ptr_ = cv_bridge::toCvCopy(msg, enc::MONO8);
-    ROS_INFO("image found");
+    //ROS_INFO("image found");
   }
   catch (cv_bridge::Exception& e)
   {
@@ -86,7 +89,7 @@ void FDCore::process()
 
 void FDCore::editImage()
 {
-	ROS_INFO("Edit Image");
+	//ROS_INFO("Edit Image");
 
 	cv_output_img_ptr_->header.stamp = cv_input_img_ptr_->header.stamp;
 	cv::cvtColor(cv_input_img_ptr_->image, cv_output_img_ptr_->image, CV_GRAY2BGR);
@@ -97,7 +100,7 @@ void FDCore::editImage()
 		float width = sal_db[ptpairs_msg_.pairs[m]].width /2;
 		float height = sal_db[ptpairs_msg_.pairs[m]].height /2;
 		int no = ptpairs_msg_.pairs[m];
-		cv::putText(cv_output_img_ptr_->image,std::to_string(no), cv::Point(int(x),int(y)),cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar(255,0,0), 2 );
+		cv::putText(cv_output_img_ptr_->image,std::to_string(no), cv::Point(int(x),int(y)),cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar(0,0,255), 2 );
 		cv::rectangle(cv_output_img_ptr_->image, cv::Point(x-width,y-height), cv::Point(x+width,y+height), cv::Scalar(0,255,0));
 		
 	}
@@ -107,7 +110,7 @@ void FDCore::editImage()
 void FDCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg)
 {
   ptpairs_msg_ = *msg;
-  ROS_INFO("point pairs found");
+  //ROS_INFO("point pairs found");
 }
 
 void FDCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
@@ -117,7 +120,7 @@ void FDCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
   {
     sal_db.resize(msg.dims);
     memcpy(sal_db.data(), msg.data.data(), msg.dims * sizeof(sscrovers_pmslam_common::SPoint));
-    ROS_INFO("features DB found");
+    //ROS_INFO("features DB found");
   }
   else
     ROS_ERROR("No data in database topic");
@@ -128,10 +131,11 @@ void FDCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
 
 void FDCore::publishImage()
 {
-ROS_INFO("Publish Image");
+//ROS_INFO("Publish Image");
  
     cv::imshow(WINDOW, cv_output_img_ptr_->image);
     cv::waitKey(3);
+    //image_pub_.publish(cv_output_img_ptr_->toImageMsg());
  
 }
 
