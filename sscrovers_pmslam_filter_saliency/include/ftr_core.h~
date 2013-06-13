@@ -94,9 +94,6 @@ private:
   //! current pose (state) of rover
   RoverState curr_pose_;
 
-  //! input features database object
-  FeaturesDB_t db_;
-
   //! temporary - publish changed db for visualization module - should be changed to add to db
   void publishDB();
 

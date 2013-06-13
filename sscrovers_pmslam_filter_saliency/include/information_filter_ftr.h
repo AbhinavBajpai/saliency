@@ -4,8 +4,6 @@
 #include "EIF.h"
 #include "RoverState.h"//to remove?
 #include "Map.h"//to remove
-#include "features_db.h"
-#include "SURFPoint.h"
 #include "sscrovers_pmslam_common/SPoint.h"
 #include <vector>
 

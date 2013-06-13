@@ -45,7 +45,7 @@ public:
   } PMSLAM_Data_msg;
 
   void Init(RoverState* state);
-  void update(int step, RoverState s, std::vector<sscrovers_pmslam_common::SPoint> s);
+  void update(int step, RoverState s, std::vector<sscrovers_pmslam_common::SPoint> sVec);
   void CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<CvPoint3D64f> *pointsCMin);
 
 private:
