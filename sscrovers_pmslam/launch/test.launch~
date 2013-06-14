@@ -3,7 +3,7 @@
 
 	<include file="$(find sscrovers_file_sequence_publisher)/launch/sequence_publisher.launch"/>
 	<include file="$(find sscrovers_pmslam_control)/launch/control.launch"/>
-	<include file="$(find sscrovers_pmslam_feature_detection_saliency)/launch/feature_detection.launch"/>
+	<include file="$(find sscrovers_pmslam_saliency_feature_detection)/launch/all.launch"/>
 	
 </launch>
 

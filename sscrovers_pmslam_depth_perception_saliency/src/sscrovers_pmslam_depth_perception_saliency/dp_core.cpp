@@ -96,7 +96,7 @@ void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
     }
     else
     {
-      ROS_WARN("There is no trajectory point corresponding to features data...");
+      ROS_WARN("There is no trajectory point corresponding to features data...2");
       //data_completed_f_ = false;
     }
 

@@ -95,8 +95,6 @@ void FtrCore::process()
   //publishMap3D();
   publishPMSlamData();
   publishDB();
-
-  step_++;
 }
 
 void FtrCore::publishMap3D()

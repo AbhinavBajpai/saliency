@@ -10,13 +10,12 @@ using namespace std;
 
 ORCore::ORCore(ros::NodeHandle *_n)
 {
-  step_ = 1;
+  step_ = -1;
   curr_pose_ptr_ = new RoverState;
 
 
   NVec = SALPointVec();
   NMinusOneVec = SALPointVec();
-  step=0;
 
 
   // Initialise node parameters from launch file or command line.
@@ -90,7 +89,8 @@ void ORCore::publishPtPairs()
 void ORCore::featuresCallback(const geometry_msgs::PoseArray& msg)
 {
 	saliency_poses_vec.clear();
-	stamp_ = msg->header.stamp;
+	stamp_ = msg.header.stamp;
+        step_ = msg->header.stamp.nsec;
 	SALPoint spTemp;
 	NVec = SALPointVec(*curr_pose_ptr_, std::time(0));
 	for(int i=0; i< msg.poses.size();i++){
@@ -232,7 +232,7 @@ void ORCore::filter()
 				int object = ppm1.at(plast.j);
 				pp.push_back(object);
 				vs[object].flag = 1;
-				vs[object].step = step;
+				vs[object].step = step_;
 				vs[object].n += 1;
 				vs[object].x = NVec.atX(e);
 				vs[object].y = NVec.atY(e);
@@ -250,7 +250,7 @@ void ORCore::filter()
 				int object = ppm2.at(plast.j);
 				pp.push_back(object);
 				vs[object].flag = 2;
-				vs[object].step = step;
+				vs[object].step = step_;
 				vs[object].n += 1;
 				vs[object].x = NVec.atX(e);
 				vs[object].y = NVec.atY(e);
@@ -268,7 +268,7 @@ void ORCore::filter()
 				pp.push_back(vs.size());
 				sscrovers_pmslam_common::SPoint sp;
 				sp.flag = 1;
-				sp.step = step;
+				sp.step = step_;
 				sp.n = 1;
 				sp.id = 0;
 				sp.x = NVec.atX(e);
@@ -288,8 +288,6 @@ void ORCore::filter()
 	}
 	ppm2 = ppm1;
 	ppm1 = pp;
-	step++;	
-	step_++;
 }
 
 
@@ -327,7 +325,7 @@ void ORCore::trajectoryCallback(const nav_msgs::PathConstPtr& msg)
     }
     else
     {
-      ROS_WARN("There is no trajectory point corresponding to features data...");
+      ROS_WARN("There is no trajectory point corresponding to features data...1");
       data_completed_f_ = false;
     }
   }
@@ -340,7 +338,7 @@ void ORCore::publishDB()
 	if(vs.size()>0){
 		sscrovers_pmslam_common::SALVector sal_db;
 
-		sal_db.header.stamp.nsec = step;
+		sal_db.header.stamp.nsec = step_;
 		sal_db.dims = vs.size();
 		sal_db.data.resize(vs.size());
 		memcpy(sal_db.data.data(), vs.data(), sizeof(sscrovers_pmslam_common::SPoint) * vs.size()); 
