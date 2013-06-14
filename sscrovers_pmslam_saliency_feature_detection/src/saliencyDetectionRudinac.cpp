@@ -79,6 +79,7 @@ void saliencyMapRudinac::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 			poser.orientation.y = brect.y;
 			poser.orientation.z = brect.height;
 			poser.orientation.w = brect.width;
+			poseArray.header.stamp = cv_ptr->header.stamp;
 			poseArray.poses.push_back(poser); 
 			cv::rectangle(saliencymap_, brect.tl(), brect.br(), cv::Scalar(100, 100, 200), 6, CV_AA);
                         cv::rectangle(image2_, brect.tl(), brect.br(), cv::Scalar(0, 0, 255), 6, CV_AA);

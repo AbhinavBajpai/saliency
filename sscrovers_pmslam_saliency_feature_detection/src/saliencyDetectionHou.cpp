@@ -47,13 +47,6 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 	salientpoint_.x = pt_salient.x;
 	salientpoint_.y = pt_salient.y;
 
-	//int erosion_size = 9;   
-	//cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-       //               cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1), 
-       //               cv::Point(erosion_size, erosion_size) );
-	//cv::dilate(saliencymap_, saliencymap_, element); 
-	//cv::erode(saliencymap_, saliencymap_, element); 
-
 	
 	//	CONVERT FROM CV::MAT TO ROSIMAGE FOR PUBLISHING
 	saliencymap_.convertTo(saliencymap_, CV_8UC1,255);
@@ -87,6 +80,7 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 			poser.orientation.y = brect.y;
 			poser.orientation.z = brect.height;
 			poser.orientation.w = brect.width;
+			poseArray.header.stamp = cv_ptr->header.stamp;
 			poseArray.poses.push_back(poser); 
 			cv::rectangle(saliencymap_, brect.tl(), brect.br(), cv::Scalar(100, 100, 200), 6, CV_AA);
                         cv::rectangle(image2_, brect.tl(), brect.br(), cv::Scalar(0, 0, 255), 6, CV_AA);

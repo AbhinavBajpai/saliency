@@ -84,6 +84,7 @@ void FtrCore::process()
       }
       else
       {
+        ROS_INFO("Create Map");
         info_filter_ptr_->CreateMap(_u, &ptpairs_, &points3d_);
       }
     }
@@ -94,6 +95,8 @@ void FtrCore::process()
   //publishMap3D();
   publishPMSlamData();
   publishDB();
+
+  step_++;
 }
 
 void FtrCore::publishMap3D()
@@ -209,7 +212,7 @@ void FtrCore::publishDB()
  
 
   //ROS_STATIC_ASSERT(sizeof(MyVector3) == 24);
-
+/*
   sscrovers_pmslam_common::DynamicArray serialized_db;
 
   serialized_db.header.stamp.nsec = step_;
@@ -224,17 +227,9 @@ void FtrCore::publishDB()
   
 
   db_pub_.publish(serialized_db);
+*/
 }
 
-/*
- void FtrCore::configCallback(node_example::node_example_paramsConfig &config, uint32_t level)
- {
- // Set class variables to new values. They should match what is input at the dynamic reconfigure GUI.
- message = config.message.c_str();
- a = config.a;
- b = config.b;
- } // end configCallback()
- */
 
 //-----------------------------MAIN----------------------------
 int main(int argc, char **argv)
@@ -253,7 +248,7 @@ int main(int argc, char **argv)
 
   while (n.ok())
   {
-    ftr_core->process();
+    //ftr_core->process();
     //fd_core->Publish();
     ros::spinOnce();
     r.sleep();

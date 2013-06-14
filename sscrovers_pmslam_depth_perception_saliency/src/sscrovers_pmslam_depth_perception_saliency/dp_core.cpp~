@@ -66,7 +66,7 @@ void DPCore::process()
 
 void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
 {
-  ROS_INFO("trajectory found");
+  //ROS_INFO("trajectory found");
   est_traj_msg_ = *msg;
   if (step_ >= 0)
   {
@@ -108,12 +108,12 @@ void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg
 {
   step_ = msg->header.stamp.nsec;
   ptpairs_msg_ = *msg;
-  ROS_INFO("ptpairs found");
+  //ROS_INFO("ptpairs found");
 }
 
 void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
 {
-  ROS_INFO("Sal_db found");
+  //ROS_INFO("Sal_db found");
   if (msg.dims > 0)
   {
     sal_db.resize(msg.dims);

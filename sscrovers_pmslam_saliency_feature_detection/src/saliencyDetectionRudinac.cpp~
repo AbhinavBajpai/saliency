@@ -10,7 +10,6 @@
 // v1.1: Ported to Robot Operating System (ROS)
 
 #include <saliency_detection/saliencyDetectionRudinac.h>
-#include <cv_bridge/CvBridge.h>
 
 void saliencyMapRudinac::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 {

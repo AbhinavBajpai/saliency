@@ -90,6 +90,7 @@ void ORCore::publishPtPairs()
 void ORCore::featuresCallback(const geometry_msgs::PoseArray& msg)
 {
 	saliency_poses_vec.clear();
+	stamp_ = msg.header.stamp;
 	SALPoint spTemp;
 	NVec = SALPointVec(*curr_pose_ptr_, std::time(0));
 	for(int i=0; i< msg.poses.size();i++){

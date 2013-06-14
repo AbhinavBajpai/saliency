@@ -84,6 +84,7 @@ void FtrCore::process()
       }
       else
       {
+        ROS_INFO("Create Map");
         info_filter_ptr_->CreateMap(_u, &ptpairs_, &points3d_);
       }
     }
@@ -227,15 +228,6 @@ void FtrCore::publishDB()
 */
 }
 
-/*
- void FtrCore::configCallback(node_example::node_example_paramsConfig &config, uint32_t level)
- {
- // Set class variables to new values. They should match what is input at the dynamic reconfigure GUI.
- message = config.message.c_str();
- a = config.a;
- b = config.b;
- } // end configCallback()
- */
 
 //-----------------------------MAIN----------------------------
 int main(int argc, char **argv)
@@ -254,7 +246,7 @@ int main(int argc, char **argv)
 
   while (n.ok())
   {
-    ftr_core->process();
+    //ftr_core->process();
     //fd_core->Publish();
     ros::spinOnce();
     r.sleep();
