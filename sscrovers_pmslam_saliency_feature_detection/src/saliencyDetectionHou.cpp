@@ -17,9 +17,11 @@
 void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 {
 	cv_bridge::CvImagePtr cv_ptr;
-	sensor_msgs::Image salmap_, heatmap_;
+	sensor_msgs::Image salmap_, heatmap_, temp_;
 	geometry_msgs::Point salientpoint_;
+	geometry_msgs::Point32 temppoint_;
 	geometry_msgs::PoseArray poseArray;
+	sscrovers_pmslam_common::featureMap fm_;
 
 	Mat image_, saliencymap_, heatMap, image2_;
 	Point pt_salient;
@@ -61,8 +63,9 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 
 	//bounding boxes
 
-	cv::Mat clonedImage;
+	cv::Mat clonedImage,clonedImage2,clonedImage3, cropped;
 	clonedImage = saliencymap_.clone();
+	clonedImage2 = saliencymap_.clone();
 	std::vector< std::vector<cv::Point> > contours;
 	std::vector<cv::Point> points;
 	cv::findContours(clonedImage, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
@@ -73,9 +76,21 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 		}
 		if(points.size() > 0){
 			cv::Rect brect = cv::boundingRect(cv::Mat(points).reshape(2));
+
+			cropped = clonedImage2(brect);
+			
+
 			geometry_msgs::Pose poser;
 			poser.position.x = brect.x + brect.width/2;
 			poser.position.y = brect.y + brect.height/2;
+
+			temppoint_.x = brect.x;
+			temppoint_.y = brect.y;
+			fillImage(temp_, "mono8",cropped.rows, cropped.cols, cropped.step, const_cast<uint8_t*>(cropped.data));
+			fm_.points.push_back(temppoint_);
+			fm_.imgs.push_back(temp_);
+			fm_.number++;
+			
 			poser.orientation.x = brect.x;
 			poser.orientation.y = brect.y;
 			poser.orientation.z = brect.height;
@@ -98,7 +113,7 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 	point_pub_.publish(salientpoint_);
 	heatmap_pub_.publish(heatmap_);
 	features_pub_.publish(poseArray);
-	
+	featureMap_pub_.publish(fm_);
 
 	return;
 }

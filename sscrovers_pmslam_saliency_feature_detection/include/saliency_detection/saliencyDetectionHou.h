@@ -17,7 +17,9 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/fill_image.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Point32.h>
 #include <geometry_msgs/PoseArray.h>
+#include "sscrovers_pmslam_common/featureMap.h"
 
 // OpenCV
 #include "cv.h"
@@ -31,7 +33,7 @@ class saliencyMapHou
 {
 protected:
     	ros::NodeHandle nh_;
-    	ros::Publisher point_pub_;
+    	ros::Publisher point_pub_, featureMap_pub_;
     	image_transport::ImageTransport it_;
     	image_transport::Subscriber 	image_sub_;
     	image_transport::Publisher		saliencymap_pub_, heatmap_pub_;
@@ -45,6 +47,7 @@ public:
     		heatmap_pub_= it_.advertise("/saliency/image_hou_heat", 1);
     		point_pub_ = nh_.advertise<geometry_msgs::Point>("/saliency/salientpoint", 1);
 		features_pub_ = nh_.advertise<geometry_msgs::PoseArray>("/saliency/features_Hou", 1);
+		featureMap_pub_ = nh_.advertise<sscrovers_pmslam_common::featureMap>("/saliency/features_Hou_Maps", 1);
     	}
 
 
