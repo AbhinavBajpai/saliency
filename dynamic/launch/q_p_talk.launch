@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="dynamic" name="talk" type="talk" ns="ont" respawn="False"/>
+</launch>
