@@ -55,7 +55,7 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
   PMSLAM_Data_msg.MapOut.positions.x.clear();
   PMSLAM_Data_msg.MapOut.positions.y.clear();
   PMSLAM_Data_msg.MapOut.positions.z.clear();
-ROS_INFO("pp = %lu", ptpairsCMin->size());
+
   if (*STEP > 0)
   {
     slam_filter_ptr_->predict(*u);

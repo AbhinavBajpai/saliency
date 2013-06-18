@@ -134,7 +134,7 @@ void DPCore::publishPoints3D()
   _ppoints3d_msg.header.stamp.nsec = step_;
 
   _ppoints3d_msg.pts.resize(pt_pairs_out_.size());
-ROS_INFO("print pt3d %lu",pt_pairs_out_.size() );
+
   for (int i = 0; i < (int)pt_pairs_out_.size(); i++)
   {
     _ppoints3d_msg.pts[i].id = pt_pairs_out_[i];

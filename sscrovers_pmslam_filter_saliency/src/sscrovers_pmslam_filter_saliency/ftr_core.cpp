@@ -181,7 +181,7 @@ void FtrCore::ptpairs3dCallBack(const sscrovers_pmslam_common::PairedPoints3DCon
   unsigned int in_size = msg->pts.size();
   ptpairs_.resize(in_size);
   points3d_.resize(in_size);
-  ROS_INFO("Read in ptpairs: %i",in_size);
+
   for (unsigned int i = 0; i < in_size; i++)
   {
     ptpairs_[i] = msg->pts[i].id;

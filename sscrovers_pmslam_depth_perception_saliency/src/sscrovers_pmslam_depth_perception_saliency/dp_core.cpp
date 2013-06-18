@@ -108,7 +108,6 @@ void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg
 {
   step_ = msg->header.stamp.nsec;
   ptpairs_msg_ = *msg;
-  //ROS_INFO("ptpairs found, %i", ptpairs_msg_.pairs[3]);
   dbTest=true;
 }
 
