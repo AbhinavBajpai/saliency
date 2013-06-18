@@ -1,0 +1,4 @@
+#Extra features
+geometry_msgs/Points32 point1
+geometry_msgs/Points32[] extraPoints
+uint32 numbers

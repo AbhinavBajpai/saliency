@@ -65,7 +65,7 @@ private:
   int step_;
 
   void featuresCallback(const geometry_msgs::PoseArray& msg);
-  void addFeature(cv::Mat *image);
+  void addFeature(cv::Mat *image, float x, float y);
 
   void featureMapCallback(const sscrovers_pmslam_common::featureMap& msg);
 };

@@ -22,7 +22,9 @@
 #include "geometry_msgs/PoseArray.h"
 #include "sscrovers_pmslam_common/featureMap.h"
 
-
+#include "sscrovers_pmslam_common/extraFeature.h"
+#include "sscrovers_pmslam_common/extraFeatures.h"
+#include "geometry_msgs/Point32.h"
 
 
 using std::string;
@@ -60,6 +62,7 @@ private:
   geometry_msgs::PoseArray before, after;
   bool test;
   sscrovers_pmslam_common::featureMap readIn;
+
 
   //! current step
   int step_;

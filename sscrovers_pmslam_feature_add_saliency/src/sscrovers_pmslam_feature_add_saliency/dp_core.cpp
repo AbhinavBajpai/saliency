@@ -17,7 +17,7 @@ private_node_handle.param("output_features_topic_name", sub_features_topic_name_
 
 
   //! publishers
-  features_pub_ = _n->advertise<geometry_msgs::PoseArray>("/saliency/features_added", 1);
+  features_pub_ = _n->advertise<sscrovers_pmslam_common::extraFeatures>("/saliency/features_added", 1);
 
   //! subscribers
   features_sub_ = _n->subscribe(sub_features_topic_name_.c_str(), 1, &DPCore::featuresCallback, this);
@@ -111,12 +111,16 @@ void thinning(cv::Mat& im)
 void DPCore::process()
 {
 	if(test){
+		sscrovers_pmslam_common::extraFeatures out;
+		out.number = readIn.number;
+		sscrovers_pmslam_common::extraFeature tempExtra;
 		cv_bridge::CvImagePtr cv_ptr;
+   		std::vector<cv::Point> vertexs;
 		cv::Mat image_, image2_;
 		test=false;
 		int size = readIn.number;
 		int i=0;
-		//for(int i=0;i<size;i++){
+		for(int i=0;i<size;i++){
 			try{
 				cv_ptr = cv_bridge::toCvCopy(readIn.imgs[i], sensor_msgs::image_encodings::MONO8);
 			}
@@ -128,10 +132,58 @@ void DPCore::process()
 			image2_ = image_.clone();
 			ROS_INFO("thinning");
 			thinning(image_);
-			cv::imshow("Before", image2_);
-			cv::imshow("After", image_);
-			cv::waitKey(10);
-		//}
+			//cv::imshow("Before", image2_);
+			//cv::imshow("After", image_);
+			//cv::waitKey(10);
+			const int BLOCK_SIZE = 3;
+			int rowBlocks = image_.rows;
+			int colBlocks = image_.cols;    
+			int now = 0;
+			for(int i = 1; i < rowBlocks-1; i++){
+			    for(int j = 1; j < colBlocks-1; j++){
+				if(image_.at<int>(i,j) == 1){
+					cv::Mat block_ij(image_, cv::Rect(i, j, i+BLOCK_SIZE, j+BLOCK_SIZE));
+					for(int k=0;k<3;k++){
+						for(int l=0;l<3;l++){
+							if(block_ij.at<int>(k,l)==1){
+								now++;
+							}
+						}
+					}
+					if(now > 3){
+						vertexs.push_back(cv::Point(i,j));	
+					}
+				}	
+			    }
+			}
+			//close, not too
+			for(int g=0;g<vertexs.size();g++){
+				for(int h=g+1;h<vertexs.size();h++){
+					float dist = (vertexs.at(g).x - vertexs.at(h).x)*(vertexs.at(g).x - vertexs.at(h).x) + (vertexs.at(g).y - vertexs.at(h).y)*(vertexs.at(g).y - vertexs.at(h).y);
+					if (dist > 25){
+						vertexs.erase(vertexs.begin()+g);
+					}
+				}
+			}
+			
+			for(int p=0;p<vertexs.size();p++){
+				vertexs.at(p).x = vertexs.at(p).x + before.poses[p].position.x;
+				vertexs.at(p).y = vertexs.at(p).y + before.poses[p].position.y;
+			}
+
+			//convert to extraFeature
+			tempExtra.point1.x = before.poses[i].position.x;
+			tempExtra.point1.y = before.poses[i].position.y;
+			tempExtra.numbers=vertexs.size();
+			for(int o=0; o<vertexs.size(); o++){
+				geometry_msgs::Point32 ptemp;
+				ptemp.x = vertexs.at(o).x;
+				ptemp.y = vertexs.at(o).y;
+				tempExtra.extraPoints.push_back(ptemp);
+			}
+			out.extras.push_back(tempExtra);
+		}
+		features_pub_.publish(out);
 	}
 
 
