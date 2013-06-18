@@ -55,6 +55,7 @@ private:
 
   std::vector<sscrovers_pmslam_common::SPoint> db_ptr_;
   ros::NodeHandle n;
+  std::vector <int> idVec;
 
 };
 

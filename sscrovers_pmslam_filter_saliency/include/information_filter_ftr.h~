@@ -54,6 +54,7 @@ private:
   EIF* slam_filter_ptr_;
 
   std::vector<sscrovers_pmslam_common::SPoint> db_ptr_;
+  ros::NodeHandle n;
 
 };
 

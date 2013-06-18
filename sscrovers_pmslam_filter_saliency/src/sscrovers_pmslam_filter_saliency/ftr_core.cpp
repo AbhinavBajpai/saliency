@@ -47,7 +47,8 @@ FtrCore::FtrCore(ros::NodeHandle *_n)
 
   //!publishers
   pmdata_pub_ = _n->advertise<sscrovers_pmslam_common::PMSlamData>(pub_output_data_topic_name_.c_str(), 10);
-  db_pub_ = _n->advertise<sscrovers_pmslam_common::DynamicArray>("output_db", 10);
+  //db_pub_ = _n->advertise<sscrovers_pmslam_common::DynamicArray>("output_db", 10);
+  //map3d_pub__n->advertise<sscrovers_pmslam_common::PMSlamData>("map3d", 10);
 
   step_ = -1;
 
@@ -84,7 +85,7 @@ void FtrCore::process()
       }
       else
       {
-        ROS_INFO("Create Map");
+        //ROS_INFO("Create Map");
         info_filter_ptr_->CreateMap(_u, &ptpairs_, &points3d_);
       }
     }
@@ -94,7 +95,7 @@ void FtrCore::process()
 
   //publishMap3D();
   publishPMSlamData();
-  publishDB();
+  //publishDB();
 }
 
 void FtrCore::publishMap3D()
