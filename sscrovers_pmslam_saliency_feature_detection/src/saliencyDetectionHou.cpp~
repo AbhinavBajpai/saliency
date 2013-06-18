@@ -76,8 +76,8 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 		}
 		if(points.size() > 0){
 			cv::Rect brect = cv::boundingRect(cv::Mat(points).reshape(2));
-
-			cropped = clonedImage2(brect);
+			cv::Rect brect1(brect.x-2,brect.y-2,brect.width+2,brect.height+2);
+			cropped = clonedImage2(brect1);
 			
 
 			geometry_msgs::Pose poser;
@@ -112,6 +112,7 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 	saliencymap_pub_.publish(salmap_);
 	point_pub_.publish(salientpoint_);
 	heatmap_pub_.publish(heatmap_);
+	poseArray.header =   cv_ptr->header;
 	features_pub_.publish(poseArray);
 	featureMap_pub_.publish(fm_);
 

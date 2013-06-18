@@ -1,0 +1,13 @@
+<launch>
+	<!--rosparam command="load" file="$(sscrovers_pmslam)/config/pmslam_config.yaml" /-->
+
+	<include file="$(find sscrovers_file_sequence_publisher)/launch/sequence_publisher.launch"/>
+	<include file="$(find sscrovers_pmslam_control)/launch/control.launch"/>
+	<include file="$(find sscrovers_pmslam_saliency_feature_detection)/launch/all.launch"/>
+
+	
+</launch>
+
+
+
+
