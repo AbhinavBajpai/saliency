@@ -75,11 +75,6 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 ## Declare a cpp executable
  add_executable(fa_node_s
 	src/${PROJECT_NAME}/dp_core.cpp
-	src/${PROJECT_NAME}/direct_depth_dp.cpp
-	src/${PROJECT_NAME}/triangulate_dp.cpp
-	src/${PROJECT_NAME}/RoverState.cpp
-	src/${PROJECT_NAME}/SURFPoint.cpp
-	src/${PROJECT_NAME}/features_db.cpp
  )
 
  #add_executable(dp_node_dy_s
