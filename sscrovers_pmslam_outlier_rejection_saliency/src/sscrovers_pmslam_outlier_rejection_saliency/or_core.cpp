@@ -16,7 +16,7 @@ ORCore::ORCore(ros::NodeHandle *_n)
 
   NVec = SALPointVec();
   NMinusOneVec = SALPointVec();
-
+  ros::param::set("filter", false);
 
   // Initialise node parameters from launch file or command line.
   // Use a private node handle so that multiple instances of the node can be run simultaneously
@@ -44,6 +44,8 @@ ORCore::ORCore(ros::NodeHandle *_n)
   db_pub_ = _n->advertise<sscrovers_pmslam_common::SALVector>("SAL_db", 1);
 
   data_completed_f_ = false;
+  latest =false;	
+  prev=false;
 }
 
 ORCore::~ORCore()
@@ -224,6 +226,8 @@ void ORCore::filter()
 		NMinusTwoVec = NMinusOneVec;
 		NMinusOneVec = NVec;
 		pp.clear();
+		prev = latest;
+		ros::param::get("filter",latest);
 		//ROS_INFO("Conversion Started");
 		for(int e=0;e<NVec.size();e++ ){
 			ptpair plast = outP.at(e);
@@ -234,6 +238,10 @@ void ORCore::filter()
 				vs[object].flag = 1;
 				vs[object].step = step_;
 				vs[object].n += 1;
+				
+				if(latest){
+					vs[object].id = 1;
+				}
 				vs[object].x = NVec.atX(e);
 				vs[object].y = NVec.atY(e);
 				vs[object].height = NVec.atH(e);
@@ -252,6 +260,9 @@ void ORCore::filter()
 				vs[object].flag = 2;
 				vs[object].step = step_;
 				vs[object].n += 1;
+				if(latest){
+					vs[object].id = 1;
+				}
 				vs[object].x = NVec.atX(e);
 				vs[object].y = NVec.atY(e);
 				vs[object].height = NVec.atH(e);
@@ -282,6 +293,11 @@ void ORCore::filter()
 				sp.r.pitch = curr_pose_ptr_->pitch;
 				sp.r.roll = curr_pose_ptr_->roll;
 				vs.push_back(sp);
+			}
+		}
+		if (prev && !latest){
+			for(int c=0;c<vs.size();c++ ){
+				vs[c].id = 0;
 			}
 		}
 		

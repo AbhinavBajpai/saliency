@@ -6,13 +6,14 @@
 #include "Map.h"//to remove
 #include "sscrovers_pmslam_common/SPoint.h"
 #include <vector>
+#include "ros/ros.h"
 
 using std::string;
 
 class InformationFilterFtr
 {
 public:
-  InformationFilterFtr();
+  InformationFilterFtr(ros::NodeHandle * nh);
   virtual ~InformationFilterFtr();
 
   //! size of the information matrix Lambda
@@ -53,6 +54,7 @@ private:
   EIF* slam_filter_ptr_;
 
   std::vector<sscrovers_pmslam_common::SPoint> db_ptr_;
+  ros::NodeHandle n;
 
 };
 

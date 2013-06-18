@@ -16,7 +16,7 @@ string convertInt(int number)
 
 FtrCore::FtrCore(ros::NodeHandle *_n)
 {
-  info_filter_ptr_ = new InformationFilterFtr();
+  info_filter_ptr_ = new InformationFilterFtr(_n);
 
   // Initialise node parameters from launch file or command line.
   // Use a private node handle so that multiple instances of the node can be run simultaneously
@@ -180,6 +180,7 @@ void FtrCore::ptpairs3dCallBack(const sscrovers_pmslam_common::PairedPoints3DCon
   unsigned int in_size = msg->pts.size();
   ptpairs_.resize(in_size);
   points3d_.resize(in_size);
+  ROS_INFO("Read in ptpairs: %i",in_size);
   for (unsigned int i = 0; i < in_size; i++)
   {
     ptpairs_[i] = msg->pts[i].id;

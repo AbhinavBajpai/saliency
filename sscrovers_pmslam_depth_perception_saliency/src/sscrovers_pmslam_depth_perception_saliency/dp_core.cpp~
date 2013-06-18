@@ -96,7 +96,7 @@ void DPCore::trajectoryCallBack(const nav_msgs::PathConstPtr& msg)
     }
     else
     {
-      ROS_WARN("There is no trajectory point corresponding to features data...");
+      ROS_WARN("There is no trajectory point corresponding to features data...2");
       //data_completed_f_ = false;
     }
 
@@ -108,7 +108,8 @@ void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg
 {
   step_ = msg->header.stamp.nsec;
   ptpairs_msg_ = *msg;
-  //ROS_INFO("ptpairs found");
+  //ROS_INFO("ptpairs found, %i", ptpairs_msg_.pairs[3]);
+  dbTest=true;
 }
 
 void DPCore::featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg)
@@ -133,6 +134,7 @@ void DPCore::publishPoints3D()
   _ppoints3d_msg.header.stamp.nsec = step_;
 
   _ppoints3d_msg.pts.resize(pt_pairs_out_.size());
+ROS_INFO("print pt3d %lu",pt_pairs_out_.size() );
   for (int i = 0; i < (int)pt_pairs_out_.size(); i++)
   {
     _ppoints3d_msg.pts[i].id = pt_pairs_out_[i];

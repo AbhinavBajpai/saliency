@@ -68,8 +68,9 @@ public:
   SALPointVec NMinusTwoVec;
   int step;
   std::vector <sscrovers_pmslam_common::SPoint> vs;
-  std::vector<int> pp, ppm1,ppm2;
-
+  std::vector<int> pp, ppm1, ppm2;
+  bool latest=false,prev =false;
+ 
 private:
   //! current stamp from subscribed data messages
   ros::Time stamp_;

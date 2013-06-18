@@ -66,7 +66,6 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 	cv::Mat clonedImage,clonedImage2,clonedImage3, cropped;
 	clonedImage = saliencymap_.clone();
 	clonedImage2 = saliencymap_.clone();
-	clonedImage3 = saliencymap_.clone();
 	std::vector< std::vector<cv::Point> > contours;
 	std::vector<cv::Point> points;
 	cv::findContours(clonedImage, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
@@ -79,10 +78,7 @@ void saliencyMapHou::imageCB(const sensor_msgs::ImageConstPtr& msg_ptr)
 			cv::Rect brect = cv::boundingRect(cv::Mat(points).reshape(2));
 
 			cropped = clonedImage2(brect);
-			cv::resize(cropped,cropped,cv::Size(320,320), cv::INTER_LINEAR);
-			cv::imshow("barry", cropped);
-			cv::imshow("carry", clonedImage3);
-			cv::waitKey(0);
+			
 
 			geometry_msgs::Pose poser;
 			poser.position.x = brect.x + brect.width/2;

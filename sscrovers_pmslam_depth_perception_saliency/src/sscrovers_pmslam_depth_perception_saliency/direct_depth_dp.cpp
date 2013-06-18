@@ -20,9 +20,6 @@ DirectDepthDP::~DirectDepthDP()
 void DirectDepthDP::transformAngles(float yaw, float pitch, float roll, double *alpha, double *beta, double *gamma)
 {
   const double PI = 3.141592;
-  //*alpha = yaw*PI/180;
-  //*beta = 2*PI-pitch*PI/180;
-  //*gamma = roll*PI/180;
 
   *alpha = roll * PI / 180;
   *beta = pitch * PI / 180;

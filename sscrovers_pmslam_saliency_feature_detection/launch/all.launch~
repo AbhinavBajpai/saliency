@@ -1,8 +1,8 @@
 <launch>
 	<arg name="kinect" value="false" />
 	<!-- Select camera stream -->
-   	<arg if="$(arg kinect)"  name="imagestream" value="/camera/image_decompressed" type="str" />
-   	<arg unless="$(arg kinect)" name="imagestream" value="/camera/image_decompressed" type="str" />
+   	<arg if="$(arg kinect)"  name="imagestream" value="/org_image" type="str" />
+   	<arg unless="$(arg kinect)" name="imagestream" value="/org_image" type="str" />
 
     	<!-- Hou -->
 	<node name="Hou" pkg="sscrovers_pmslam_saliency_feature_detection" type="Hou" output="screen" ns="Hou">  

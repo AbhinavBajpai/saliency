@@ -1,10 +1,13 @@
 #include "information_filter_ftr.h"
-#include "ros/ros.h"
 
-InformationFilterFtr::InformationFilterFtr() 
+
+InformationFilterFtr::InformationFilterFtr(ros::NodeHandle * nh) 
 {
   slam_filter_ptr_ = new EIF();
   map3d_ptr_ = new Map();
+  ros::param::set("filter",false);
+
+
 }
 
 InformationFilterFtr::~InformationFilterFtr()
@@ -18,7 +21,6 @@ void InformationFilterFtr::update(int step, RoverState s, std::vector<sscrovers_
 	curr_pose_ptr_= s;
 	step_ptr_ = step;
 	db_ptr_ = sVec;
-ROS_INFO("step=%i",step_ptr_);
 	
 }
 
@@ -52,7 +54,7 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
   PMSLAM_Data_msg.MapOut.positions.x.clear();
   PMSLAM_Data_msg.MapOut.positions.y.clear();
   PMSLAM_Data_msg.MapOut.positions.z.clear();
-
+ROS_INFO("pp = %lu", ptpairsCMin->size());
   if (*STEP > 0)
   {
     slam_filter_ptr_->predict(*u);
@@ -68,7 +70,7 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
     for (unsigned int j = 0; j < ptpairsCMin->size(); j ++)
     {
 
-
+      ros::param::set("filter", true);	
       temp.x = (*pointsCMin)[j ].x;
       temp.y = (*pointsCMin)[j ].y;
       temp.z = (*pointsCMin)[j ].z;
@@ -76,6 +78,9 @@ void InformationFilterFtr::CreateMap(Mat *u, vector<int> *ptpairsCMin, vector<Cv
       if ((*SDatabase)[(*ptpairsCMin)[j]].id == 0) // if new landmark
       {
 ROS_INFO("New Landmark");
+//lnadmark added
+	
+
         vn.push_back(temp);
         vrn.push_back(0.001);
 
@@ -116,7 +121,7 @@ ROS_INFO("Update Landmark");
     PMSLAM_Data_msg.TrajectoryOut.y = RoverTrajectory->tEST[*STEP].y;
     PMSLAM_Data_msg.TrajectoryOut.z = RoverTrajectory->tEST[*STEP].z;
 
-ROS_INFO("(%f, %f, %f)",PMSLAM_Data_msg.TrajectoryOut.x,PMSLAM_Data_msg.TrajectoryOut.y,PMSLAM_Data_msg.TrajectoryOut.z);
+//ROS_INFO("(%f, %f, %f)",PMSLAM_Data_msg.TrajectoryOut.x,PMSLAM_Data_msg.TrajectoryOut.y,PMSLAM_Data_msg.TrajectoryOut.z);
 
     // update map
     //#seg fault----------

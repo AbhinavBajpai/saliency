@@ -69,6 +69,7 @@ public:
   int step;
   std::vector <sscrovers_pmslam_common::SPoint> vs;
   std::vector<int> pp, ppm1, ppm2;
+  bool latest,prev;
  
 private:
   //! current stamp from subscribed data messages
