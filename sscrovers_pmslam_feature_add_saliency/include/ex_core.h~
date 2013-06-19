@@ -1,5 +1,5 @@
-#ifndef DP_CORE_H
-#define DP_CORE_H
+#ifndef EX_CORE_H
+#define EX_CORE_H
 
 // ROS includes
 #include "ros/ros.h"
@@ -20,23 +20,24 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include "geometry_msgs/PoseArray.h"
-#include "sscrovers_pmslam_common/featureMap.h"
+#include "sscrovers_pmslam_common/SALVector.h"
 
 #include "sscrovers_pmslam_common/extraFeature.h"
 #include "sscrovers_pmslam_common/extraFeatures.h"
 #include "geometry_msgs/Point32.h"
 
 
+
 using std::string;
 
-class DPCore
+class EXCore
 {
 public:
   //! Constructor.
-  DPCore(ros::NodeHandle *_n);
+  EXCore(ros::NodeHandle *_n);
 
   //! Destructor.
-  ~DPCore();
+  ~EXCore();
 
   //! rate for node main loop
   int rate_;
@@ -57,20 +58,19 @@ private:
   ros::Publisher features_pub_;
 
   //! subscribers
-  ros::Subscriber features_sub_, featureMap_sub_;
+  ros::Subscriber features_db_sub_;
 
-  geometry_msgs::PoseArray before, after;
+  geometry_msgs::PoseArray before;
   bool test;
-  sscrovers_pmslam_common::extraFeatures readIn;
+  sscrovers_pmslam_common::featureMap readIn;
 
 
   //! current step
   int step_;
 
-  void featuresCallback(const geometry_msgs::PoseArray& msg);
-  void addFeature(cv::Mat *image, float x, float y);
+  std::vector <sscrovers_pmslam_common::SPoint> sal_db;
 
-  void extraFeatureCallback(const sscrovers_pmslam_common::extraFeatures& msg);
+  void featuresDBCallBack(const sscrovers_pmslam_common::SALVector& msg);
 };
 
-#endif //DP_CORE_H
+#endif //ES_CORE_H

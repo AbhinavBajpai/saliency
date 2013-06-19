@@ -20,8 +20,8 @@ private_node_handle.param("output_features_topic_name", sub_features_topic_name_
   //features_pub_ = _n->advertise<sscrovers_pmslam_common::extraFeatures>("/saliency/features_added", 1);
 
   //! subscribers
-  features_sub_ = _n->subscribe(sub_features_topic_name_.c_str(), 1, &DPCore::featuresCallback, this);
   featureMap_sub_ = _n->subscribe("/saliency/features_added", 1, &DPCore::extraFeatureCallback, this);
+  ptpairs_sub_ = _n->subscribe("ptpairs", 1, &DPCore::ptpairsCallBack, this);
 
   //pmslam functional module
 
@@ -33,11 +33,6 @@ DPCore::~DPCore()
 {
 }
 
-void DPCore::featuresCallback(const geometry_msgs::PoseArray& msg){
-
-	before = msg;
-	test=true;
-}
 
 void DPCore::extraFeatureCallback(const sscrovers_pmslam_common::extraFeatures& msg){
 	readIn = msg;
@@ -47,15 +42,21 @@ void DPCore::extraFeatureCallback(const sscrovers_pmslam_common::extraFeatures& 
 
 void DPCore::process()
 {
+	int num=0;
 	for(int i=0;i<readIn.extras.size();i++){
-	ROS_INFO("%i, (%f,%f) -- %lu",i,readIn.extras[i].point1.x,readIn.extras[i].point1.y, readIn.extras[i].extraPoints.size());
+		num += readIn.extras[i].extraPoints.size();
 	}
-
+	ROS_INFO("%i",num );
 }
 
 
-void DPCore::addFeature(cv::Mat *image, float x, float y){
+void DPCore::ptpairsCallBack(const sscrovers_pmslam_common::PtPairsConstPtr& msg)
+{
+  step_ = msg->header.stamp.nsec;
+  ptpairs_msg_ = *msg;
+  dbTest=true;
 }
+
 
 
 //-----------------------------MAIN------------------------------

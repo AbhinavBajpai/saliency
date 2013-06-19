@@ -42,6 +42,8 @@ find_package(catkin REQUIRED COMPONENTS angles cv_bridge geometry_msgs image_tra
    featureMap.msg
    extraFeature.msg
    extraFeatures.msg
+   pairs.msg
+   unadjustedPairs.msg
  )
 
 ## Generate services in the 'srv' folder

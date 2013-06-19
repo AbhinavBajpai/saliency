@@ -1,0 +1,398 @@
+#include "rt_core.h"
+
+#include <iostream>
+#include <sstream>
+#include <fstream>
+
+
+using namespace std;
+
+
+RTCore::RTCore(ros::NodeHandle *_n)
+{
+  step_ = -1;
+  curr_pose_ptr_ = new RoverState;
+
+
+  NVec = SALPointVec();
+  NMinusOneVec = SALPointVec();
+  ros::param::set("filter", false);
+
+  // Initialise node parameters from launch file or command line.
+  // Use a private node handle so that multiple instances of the node can be run simultaneously
+  // while using different parameters.
+  ros::NodeHandle private_node_handle("~");
+  private_node_handle.param("rate", rate_, int(10));
+  // topic names
+  private_node_handle.param("output_features_topic_name", sub_features_topic_name_, string("/saliency/features_Hou"));
+  private_node_handle.param("sub_trajectory_topic_name", sub_trajectory_topic_name_, string("est_traj"));
+  private_node_handle.param("pub_ptpairs_topic_name", pub_ptpairs_topic_name_, string("ptpairs"));
+
+  // debug flags
+  private_node_handle.param("features_to_file", features_to_file_f_, bool(false));
+  private_node_handle.param("ptpoints_to_file", ptpoints_to_file_f_, bool(false));
+  private_node_handle.param("db_to_file", db_to_file_f_, bool(false));
+  private_node_handle.param("traj_to_file", traj_to_file_f_, bool(false));
+
+
+  //subscribers
+  features_sub_ = _n->subscribe(sub_features_topic_name_.c_str(), 1, &RTCore::featuresCallback, this);
+  trajectory_sub_ = _n->subscribe(sub_trajectory_topic_name_.c_str(), 1, &RTCore::trajectoryCallback, this);
+
+  //publishers
+  ptpairs_pub_ = _n->advertise<sscrovers_pmslam_common::PtPairs>(pub_ptpairs_topic_name_.c_str(), 1);
+  db_pub_ = _n->advertise<sscrovers_pmslam_common::SALVector>("SAL_db", 1);
+ptpairsUnAdj_pub_ = _n->advertise<sscrovers_pmslam_common::unadjustedPairs>("unadjusted", 1);
+
+  data_completed_f_ = false;
+  latest =false;	
+  prev=false;
+}
+
+RTCore::~RTCore()
+{
+
+}
+
+void RTCore::process()
+{
+  //put here everything that should run with node loop
+  //if get complet data and step is updated
+  if ((data_completed_f_) && (step_ > 0))
+  {
+    data_completed_f_ = false;
+
+    filter();
+    publishPtPairs();
+    publishDB(); //send data to DB
+  }
+}
+
+void RTCore::sendToSurfDataBase()
+{
+  //publishing all db
+}
+
+void RTCore::publishPtPairs()
+{
+  // push forward stamp
+  ptpairs_msg_.header.stamp = stamp_;
+  // size of data to publish
+  int size = pp.size();
+  //reserve space for data;
+  ptpairs_msg_.pairs.resize(size);
+  // copy data to message structure
+  memcpy(ptpairs_msg_.pairs.data(), pp.data(), size * sizeof(int)); 
+  // publish msg
+  ptpairs_pub_.publish(ptpairs_msg_);
+  pp.clear();
+
+}
+
+void RTCore::featuresCallback(const geometry_msgs::PoseArray& msg)
+{
+	saliency_poses_vec.clear();
+	stamp_ = msg.header.stamp;
+        step_ = msg.header.stamp.nsec;
+	SALPoint spTemp;
+	NVec = SALPointVec(*curr_pose_ptr_, std::time(0));
+	for(int i=0; i< msg.poses.size();i++){
+		saliency_poses p;
+		p.centroid_x = msg.poses[i].position.x;
+		p.centroid_y = msg.poses[i].position.y;
+		p.width = msg.poses[i].orientation.w;
+		p.height = msg.poses[i].orientation.z;
+		spTemp = SALPoint(msg.poses[i].position.x,msg.poses[i].position.y,msg.poses[i].orientation.w, msg.poses[i].orientation.z );
+		NVec.push_back(spTemp);
+		saliency_poses_vec.push_back(p);
+	}
+
+	process( );
+}
+
+ptpairs RTCore::nearestNeighbour(){
+	//ROS_INFO("NN begin N = %i, N-1 = %i",NVec.size(),NMinusOneVec.size());
+	int closest;
+	ptpairs ptpairs_local;
+	float dmin;	
+	float d, area, areaMO;
+	int framee;
+	for(int i = 0; i<NVec.size(); i++){
+		dmin=32;
+		closest=i;
+		framee = 0;
+		for(int j=0; j<NMinusOneVec.size(); j++){
+			d = NMinusOneVec.at(j).dist(NVec.at(i));
+			area = NVec.at(i).height * NVec.at(i).width;
+			areaMO = NMinusOneVec.at(j).width * NMinusOneVec.at(j).height;
+			if(d<dmin && area < 4*areaMO && 4 * area > areaMO){
+				dmin=d;
+				closest = j;
+				framee = -1;
+			}
+		}
+		
+		ptpairs_local.add(closest,dmin,framee);
+	}
+	//ROS_INFO("NN End");
+	return ptpairs_local;
+}
+
+
+ptpairs RTCore::nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in){
+//TODO fix only points to unused points from n-1 frame
+	//ROS_INFO("NN2 begin");
+	int closest;
+	ptpairs ptpairs_local;
+	float dmin;	
+	float d, area, areaMO;
+	int framee;
+	for(int i = 0; i<N.size(); i++){
+		dmin=32;
+		closest=i;
+		framee=0;
+		if(in.atFrame(i)==0){
+			for(int j=0; j<NM2.size(); j++){
+				d = NM2.at(j).dist(N.at(i));
+				area = N.at(i).height * N.at(i).width;
+				areaMO = NM2.at(j).width * NM2.at(j).height;
+				if(d<dmin && area < 4*areaMO && 4 * area > areaMO){
+					dmin=d;
+					closest = j;
+					framee=-2;
+				}
+			}
+			ptpairs_local.add(closest,dmin,framee);
+		}else{
+			dmin = in.atD(i);
+			closest = in.atJ(i);
+			ptpairs_local.add(closest,dmin,in.atFrame(i));
+		}
+
+	}
+	//ROS_INFO("NN2 End");
+	return ptpairs_local;
+}
+
+
+
+
+
+void RTCore::filter()
+{
+
+	if(NMinusOneVec.size() < 1){
+		//fill database
+		NMinusOneVec = NVec;
+
+		for(int p=0; p<NVec.size();p++){
+			sscrovers_pmslam_common::SPoint sp;
+			sp.flag = 0;
+			sp.step = 0;
+			sp.n = 1;
+			sp.x = NVec.atX(p);
+			sp.y = NVec.atY(p);
+			sp.height = NVec.atH(p);
+			sp.width = NVec.atW(p);
+			sp.id = 0;
+			sp.r.x = curr_pose_ptr_->x;
+			sp.r.y = curr_pose_ptr_->y;
+			sp.r.z = curr_pose_ptr_->z;
+			sp.r.yaw = curr_pose_ptr_->yaw;
+			sp.r.pitch = curr_pose_ptr_->pitch;
+			sp.r.roll = curr_pose_ptr_->roll;
+
+			vs.push_back(sp);
+
+			vs.push_back(sp);
+			pp.push_back(p);
+		}
+		
+	}else{
+		//nearest neighbour
+		ptpairs outP = nearestNeighbour();
+		
+
+		//k-nn tracking all frames
+		if(NMinusTwoVec.size()>0){
+			outP = nearestNeighbour2(NVec,NMinusTwoVec,outP);
+		}
+
+		//move database
+
+		//for(int l=0;l<outP.size();l++){
+		//	ROS_INFO("%i, %i, frame= %i, d= %f",outP.pairs[l].i, outP.pairs[l].j, outP.pairs[l].frame, outP.pairs[l].d);
+		//}
+
+		NMinusTwoVec = NMinusOneVec;
+		NMinusOneVec = NVec;
+		pp.clear();
+		prev = latest;
+		sscrovers_pmslam_common::unadjustedPairs outA;
+		outA.header.stamp = stamp_;
+		ros::param::get("filter",latest);
+		//ROS_INFO("Conversion Started");
+		for(int e=0;e<NVec.size();e++ ){
+			ptpair plast = outP.at(e);
+			sscrovers_pmslam_common::pairs tpp;
+			tpp.id = plast.j;
+			tpp.frame = plast.frame;
+			outA.pairs.push_back(tpp);
+			if(plast.frame == -1){
+			//n-1 frame
+				int object = ppm1.at(plast.j);
+				pp.push_back(object);
+				vs[object].flag = 1;
+				vs[object].step = step_;
+				vs[object].n += 1;
+				
+				if(latest){
+					vs[object].id = 1;
+				}
+				vs[object].x = NVec.atX(e);
+				vs[object].y = NVec.atY(e);
+				vs[object].height = NVec.atH(e);
+				vs[object].width = NVec.atW(e);
+				vs[object].r.x = curr_pose_ptr_->x;
+				vs[object].r.y = curr_pose_ptr_->y;
+				vs[object].r.z = curr_pose_ptr_->z;
+				vs[object].r.yaw = curr_pose_ptr_->yaw;
+				vs[object].r.pitch = curr_pose_ptr_->pitch;
+				vs[object].r.roll = curr_pose_ptr_->roll;
+					
+			}else if(plast.frame == -2){
+			//n-2 frame
+				int object = ppm2.at(plast.j);
+				pp.push_back(object);
+				vs[object].flag = 2;
+				vs[object].step = step_;
+				vs[object].n += 1;
+				if(latest){
+					vs[object].id = 1;
+				}
+				vs[object].x = NVec.atX(e);
+				vs[object].y = NVec.atY(e);
+				vs[object].height = NVec.atH(e);
+				vs[object].width = NVec.atW(e);
+				vs[object].r.x = curr_pose_ptr_->x;
+				vs[object].r.y = curr_pose_ptr_->y;
+				vs[object].r.z = curr_pose_ptr_->z;
+				vs[object].r.yaw = curr_pose_ptr_->yaw;
+				vs[object].r.pitch = curr_pose_ptr_->pitch;
+				vs[object].r.roll = curr_pose_ptr_->roll;
+
+			}else{
+			//new object
+				pp.push_back(vs.size());
+				sscrovers_pmslam_common::SPoint sp;
+				sp.flag = 1;
+				sp.step = step_;
+				sp.n = 1;
+				sp.id = 0;
+				sp.x = NVec.atX(e);
+				sp.y = NVec.atY(e);
+				sp.height = NVec.atH(e);
+				sp.width = NVec.atW(e);
+				sp.r.x = curr_pose_ptr_->x;
+				sp.r.y = curr_pose_ptr_->y;
+				sp.r.z = curr_pose_ptr_->z;
+				sp.r.yaw = curr_pose_ptr_->yaw;
+				sp.r.pitch = curr_pose_ptr_->pitch;
+				sp.r.roll = curr_pose_ptr_->roll;
+				vs.push_back(sp);
+			}
+		}
+		ptpairsUnAdj_pub_.publish(outA);
+		if (prev && !latest){
+			for(int c=0;c<vs.size();c++ ){
+				vs[c].id = 0;
+			}
+		}
+		
+	}
+
+	ppm2 = ppm1;
+	ppm1 = pp;
+}
+
+
+void RTCore::trajectoryCallback(const nav_msgs::PathConstPtr& msg)
+{
+  curr_pose_ptr_ = new RoverState;
+  est_traj_msg_ = *msg;
+  if (step_ >= 0)
+  {
+    if ((int)est_traj_msg_.poses.size() > step_)
+    {
+      curr_pose_ptr_->x = est_traj_msg_.poses[step_].pose.position.x;
+      curr_pose_ptr_->y = est_traj_msg_.poses[step_].pose.position.y;
+      curr_pose_ptr_->z = est_traj_msg_.poses[step_].pose.position.z;
+
+      double _roll, _pitch, _yaw;
+#if ROS_VERSION_MINIMUM(1, 8, 0) // if current ros version is >= 1.8.0 (fuerte)
+      //min. fuerte
+      tf::Quaternion _q;
+      tf::quaternionMsgToTF(est_traj_msg_.poses[step_].pose.orientation, _q);
+      tf::Matrix3x3(_q).getRPY(_roll, _pitch, _yaw);
+#else
+      //electric and older
+      btQuaternion _q;
+      tf::quaternionMsgToTF(est_traj_msg_.poses[step_].pose.orientation, _q);
+      btMatrix3x3(_q).getRPY(_roll, _pitch, _yaw);
+#endif
+
+      curr_pose_ptr_->roll = _roll;
+      curr_pose_ptr_->pitch = _pitch;
+      curr_pose_ptr_->yaw = _yaw;
+
+      data_completed_f_ = true;
+
+    }
+    else
+    {
+      ROS_WARN("There is no trajectory point corresponding to features data...1");
+      data_completed_f_ = false;
+    }
+  }
+
+  
+}
+
+void RTCore::publishDB()
+{
+	if(vs.size()>0){
+		sscrovers_pmslam_common::SALVector sal_db;
+
+		sal_db.header.stamp.nsec = step_;
+		sal_db.dims = vs.size();
+		sal_db.data.resize(vs.size());
+		memcpy(sal_db.data.data(), vs.data(), sizeof(sscrovers_pmslam_common::SPoint) * vs.size()); 
+
+		db_pub_.publish(sal_db);
+	}
+}
+
+//-----------------------------MAIN-------------------------------
+
+int main(int argc, char **argv)
+{
+  // Set up ROS.
+  ros::init(argc, argv, "outlier_rejection_rt");
+  ros::NodeHandle n;
+
+  // Create a new NodeExample object.
+  RTCore *rt_core = new RTCore(&n); // __atribute__... only for eliminate unused variable warning :)
+
+
+  ros::Rate r(rt_core->rate_);
+
+  // Main loop.
+
+  while (n.ok())
+  {
+    ros::spinOnce();
+    r.sleep();
+  }
+
+  return 0;
+} // end main()

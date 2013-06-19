@@ -1,5 +1,5 @@
-#ifndef DP_CORE_H
-#define DP_CORE_H
+#ifndef SFM_CORE_H
+#define SFM_CORE_H
 
 // ROS includes
 #include "ros/ros.h"
@@ -24,19 +24,21 @@
 
 #include "sscrovers_pmslam_common/extraFeature.h"
 #include "sscrovers_pmslam_common/extraFeatures.h"
+#include "sscrovers_pmslam_common/PtPairs.h"
 #include "geometry_msgs/Point32.h"
-
+#include "sscrovers_pmslam_common/unadjustedPairs.h"
+#include "sscrovers_pmslam_common/pairs.h"
 
 using std::string;
 
-class DPCore
+class SFCore
 {
 public:
   //! Constructor.
-  DPCore(ros::NodeHandle *_n);
+  SFCore(ros::NodeHandle *_n);
 
   //! Destructor.
-  ~DPCore();
+  ~SFCore();
 
   //! rate for node main loop
   int rate_;
@@ -57,20 +59,24 @@ private:
   ros::Publisher features_pub_;
 
   //! subscribers
-  ros::Subscriber features_sub_, featureMap_sub_;
-
+  ros::Subscriber featureMap_sub_, ptpairs_sub_;
+ 
   geometry_msgs::PoseArray before, after;
   bool test;
   sscrovers_pmslam_common::extraFeatures readIn;
-
+  sscrovers_pmslam_common::extraFeatures now, prev;
+  sscrovers_pmslam_common::extraFeatures rearranged_n, rearranged_n1;
+  sscrovers_pmslam_common::unadjustedPairs ptpairs_msg_;
 
   //! current step
   int step_;
 
-  void featuresCallback(const geometry_msgs::PoseArray& msg);
-  void addFeature(cv::Mat *image, float x, float y);
-
   void extraFeatureCallback(const sscrovers_pmslam_common::extraFeatures& msg);
+
+  void ptpairsCallBack(const sscrovers_pmslam_common::unadjustedPairsConstPtr& msg);
+  void fundamentalMatrix(sscrovers_pmslam_common::extraFeatures& n, sscrovers_pmslam_common::extraFeatures& n1);
+
+
 };
 
 #endif //DP_CORE_H

@@ -61,7 +61,7 @@ private:
 
   geometry_msgs::PoseArray before, after;
   bool test;
-  sscrovers_pmslam_common::extraFeatures readIn;
+  sscrovers_pmslam_common::featureMap readIn;
 
 
   //! current step
@@ -70,7 +70,9 @@ private:
   void featuresCallback(const geometry_msgs::PoseArray& msg);
   void addFeature(cv::Mat *image, float x, float y);
 
-  void extraFeatureCallback(const sscrovers_pmslam_common::extraFeatures& msg);
+  void featureMapCallback(const sscrovers_pmslam_common::featureMap& msg);
+
+  void featuresCallback(const geometry_msgs::PoseArray& msg);
 };
 
 #endif //DP_CORE_H

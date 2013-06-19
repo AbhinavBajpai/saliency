@@ -74,7 +74,7 @@ include_directories(include
 set (CMAKE_CXX_FLAGS "-std=c++0x")
 ## Declare a cpp executable
  add_executable(sfm_node_s
-	src/${PROJECT_NAME}/dp_core.cpp
+	src/${PROJECT_NAME}/sf_core.cpp
  )
 
  #add_executable(dp_node_dy_s

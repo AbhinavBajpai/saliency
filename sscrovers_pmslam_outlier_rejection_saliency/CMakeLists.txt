@@ -91,6 +91,19 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/ptpairs.cpp
 )
 
+ add_executable(rt_node_s
+	src/${PROJECT_NAME}/rt_core.cpp
+	src/${PROJECT_NAME}/filter_keypoints_or.cpp
+	src/${PROJECT_NAME}/RoverState.cpp
+	src/${PROJECT_NAME}/surf.cpp
+	src/${PROJECT_NAME}/SURFPoint.cpp
+	src/${PROJECT_NAME}/features_db.cpp
+	src/${PROJECT_NAME}/SALPoint.cpp
+	src/${PROJECT_NAME}/SALPointVec.cpp
+	src/${PROJECT_NAME}/SALPointDB.cpp
+	src/${PROJECT_NAME}/ptpairs.cpp
+)
+
  add_executable(or_node_dy_s
 	src/${PROJECT_NAME}/or_core_dy.cpp
 	src/${PROJECT_NAME}/filter_keypoints_or.cpp
@@ -106,6 +119,10 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(or_node_s
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(rt_node_s
    ${catkin_LIBRARIES}
  )
 

@@ -88,6 +88,7 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/SALPoint.cpp
 	src/${PROJECT_NAME}/SALPointVec.cpp
 	src/${PROJECT_NAME}/SALPointDB.cpp
+	src/${PROJECT_NAME}/ptpairs.cpp
 )
 
  add_executable(or_node_dy_s

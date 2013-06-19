@@ -1,5 +1,5 @@
-#ifndef DP_CORE_H
-#define DP_CORE_H
+#ifndef ES_CORE_H
+#define ES_CORE_H
 
 // ROS includes
 #include "ros/ros.h"
@@ -29,14 +29,14 @@
 
 using std::string;
 
-class DPCore
+class ESCore
 {
 public:
   //! Constructor.
-  DPCore(ros::NodeHandle *_n);
+  ESCore(ros::NodeHandle *_n);
 
   //! Destructor.
-  ~DPCore();
+  ~ESCore();
 
   //! rate for node main loop
   int rate_;
@@ -57,20 +57,19 @@ private:
   ros::Publisher features_pub_;
 
   //! subscribers
-  ros::Subscriber features_sub_, featureMap_sub_;
+  ros::Subscriber features_sub_;
 
-  geometry_msgs::PoseArray before, after;
+  geometry_msgs::PoseArray before;
   bool test;
-  sscrovers_pmslam_common::extraFeatures readIn;
+  sscrovers_pmslam_common::featureMap readIn;
 
 
   //! current step
   int step_;
 
-  void featuresCallback(const geometry_msgs::PoseArray& msg);
-  void addFeature(cv::Mat *image, float x, float y);
 
-  void extraFeatureCallback(const sscrovers_pmslam_common::extraFeatures& msg);
+
+  void featuresCallback(const geometry_msgs::PoseArray& msg);
 };
 
-#endif //DP_CORE_H
+#endif //ES_CORE_H

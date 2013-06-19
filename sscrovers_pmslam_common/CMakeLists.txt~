@@ -40,6 +40,8 @@ find_package(catkin REQUIRED COMPONENTS angles cv_bridge geometry_msgs image_tra
    SALVector.msg
    RoverState.msg
    featureMap.msg
+   extraFeature.msg
+   extraFeatures.msg
  )
 
 ## Generate services in the 'srv' folder

@@ -73,8 +73,15 @@ include_directories(include
 
 set (CMAKE_CXX_FLAGS "-std=c++0x")
 ## Declare a cpp executable
- add_executable(fa_node_s
-	src/${PROJECT_NAME}/dp_core.cpp
+# add_executable(fa_node_s
+#	src/${PROJECT_NAME}/dp_core.cpp
+# )
+ add_executable(easy
+	src/${PROJECT_NAME}/es_core.cpp
+ )
+
+ add_executable(fx
+	src/${PROJECT_NAME}/ex_core.cpp
  )
 
  #add_executable(dp_node_dy_s
@@ -91,7 +98,10 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 # add_dependencies(sscrovers_pmslam_depth_perception_node sscrovers_pmslam_depth_perception_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(fa_node_s
+ target_link_libraries(easy
+   ${catkin_LIBRARIES}
+ )
+ target_link_libraries(fx
    ${catkin_LIBRARIES}
  )
  #target_link_libraries(dp_node_dy_s

@@ -120,7 +120,7 @@ void DPCore::process()
 		int size = readIn.number;
 
 		int i=0;
-		for(int i=0;i<size;i++){
+		for(int i=0;i<1;i++){
 			vertexs.clear();
 			sscrovers_pmslam_common::extraFeature tempExtra;
 			try{
@@ -155,7 +155,7 @@ void DPCore::process()
 							}
 						}
 					}
-					if(now > 3){
+					if(now > 3 || now<3){
 						vertexs.push_back(cv::Point((j/10.0),(i/10.0)));	
 					}
 				}	

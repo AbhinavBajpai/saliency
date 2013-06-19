@@ -1,0 +1,140 @@
+#ifndef RT_CORE_H
+#define RT_CORE_H
+
+// ROS includes
+#include "ros/ros.h"
+#include "ros/time.h"
+#include <tf/tf.h>
+
+//OpenCV
+#include <cv.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+#include <geometry_msgs/PoseArray.h>
+
+//ROS messages
+#include <sensor_msgs/image_encodings.h>
+#include <nav_msgs/Path.h>
+#include "sscrovers_pmslam_common/PtPairs.h"
+#include "sscrovers_pmslam_common/SALVector.h"
+#include "sscrovers_pmslam_common/SPoint.h"
+#include "sscrovers_pmslam_common/DynamicArray.h"
+#include "sscrovers_pmslam_common/DynamicArrayFeature.h"
+#include "sscrovers_pmslam_common/unadjustedPairs.h"
+
+//pmslam function class
+#include "filter_keypoints_or.h"
+#include "SALPointDB.h"
+#include "ptpairs.h"
+
+#include<ctime>
+
+namespace enc = sensor_msgs::image_encodings;
+
+struct saliency_poses {
+  float centroid_x;
+  float centroid_y;
+  float width;
+  float height;
+};
+
+struct pairInts{
+	int j;
+	int frame;
+};
+
+
+using std::string;
+
+class RTCore
+{
+public:
+  //! Constructor.
+  RTCore(ros::NodeHandle *_n);
+  vector<saliency_poses> saliency_poses_vec, saliency_poses_vec_new, database, database_all; 
+
+  //! Destructor.
+  ~RTCore();
+
+  //! rate for node main loop
+  int rate_;
+
+  //! Everything in this function is processed in each node loop
+  void process();
+
+  SALPointVec NVec;
+  SALPointVec NMinusOneVec;
+  SALPointVec NMinusTwoVec;
+  int step;
+  std::vector <sscrovers_pmslam_common::SPoint> vs;
+  std::vector<int> pp, ppm1, ppm2;
+  bool latest,prev;
+ 
+private:
+  //! current stamp from subscribed data messages
+  ros::Time stamp_;
+
+  //! topics name
+  string sub_features_topic_name_, sub_trajectory_topic_name_, pub_ptpairs_topic_name_;
+
+  //! features subscriber
+  ros::Subscriber features_sub_;
+
+  //! keypoints subscriber
+  ros::Subscriber trajectory_sub_;
+
+  //! point pairs indexes publisher
+  ros::Publisher ptpairs_pub_, ptpairsUnAdj_pub_;
+
+  //! ptpairs storage
+  sscrovers_pmslam_common::PtPairs ptpairs_msg_;
+
+  //!Estimated trajectory
+  nav_msgs::Path est_traj_msg_;
+
+  //! features database object
+  FeaturesDB_t db_;
+
+  //! current step
+  int step_;
+
+  //! current rover state
+  RoverState* curr_pose_ptr_;
+
+  //! debug flags
+  bool debug_disp_f_;
+  bool features_to_file_f_;
+  bool ptpoints_to_file_f_;
+  bool db_to_file_f_;
+  bool traj_to_file_f_;
+  //! init data value received flag
+  bool data_completed_f_;
+
+  //! Object of functional class
+  FilterKeypointsOR* filter_keypoints_ptr_;
+
+  //! send new surf features to data base
+  void sendToSurfDataBase();
+
+  //! Function for indexes to pair points with data base
+  void publishPtPairs();
+
+  //! Callback function for features subscription.
+  void featuresCallback(const geometry_msgs::PoseArray& msg);
+
+  //! Callback function for trajectory subscription.
+  void trajectoryCallback(const nav_msgs::PathConstPtr& msg);
+  void filter();
+
+
+  //temporary
+  ros::Publisher db_pub_;
+  void publishDB();
+  ptpairs nearestNeighbour();
+  ptpairs nearestNeighbour2(SALPointVec N, SALPointVec NM2, ptpairs in);
+
+};
+
+#endif //FD_CORE_H
