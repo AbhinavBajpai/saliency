@@ -76,8 +76,7 @@ private:
   void ptpairsCallBack(const sscrovers_pmslam_common::unadjustedPairsConstPtr& msg);
   void fundamentalMatrix(sscrovers_pmslam_common::extraFeatures& n, sscrovers_pmslam_common::extraFeatures& n1);
 
-cv::Mat SFCore::findFundamentalMat_local(const std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2, int method, double param1, double param2, std::vector<
-    uchar>* mask)
+
 };
 
 #endif //DP_CORE_H

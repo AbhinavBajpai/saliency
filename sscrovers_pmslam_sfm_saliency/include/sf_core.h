@@ -52,6 +52,8 @@ private:
   bool traj_to_file_f_;
   bool features_to_file_f_;
 
+  bool first;
+
   //! topic names
   string sub_features_topic_name_;
 
