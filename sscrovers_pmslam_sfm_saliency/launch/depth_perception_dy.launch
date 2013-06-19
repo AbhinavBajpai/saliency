@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="sscrovers_pmslam_depth_perception" type="dp_node_dy" name="depth_perception" output="screen">
+      <!-- frequency rate of node -->
+      <param name="rate" value="1.0" />
+
+    </node>
+</launch>
+	
