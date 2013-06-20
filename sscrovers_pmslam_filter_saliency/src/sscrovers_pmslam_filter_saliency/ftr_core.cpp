@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <visualization_msgs/MarkerArray.h>
 
 using std::stringstream;
 using std::endl;
@@ -49,6 +50,7 @@ FtrCore::FtrCore(ros::NodeHandle *_n)
   pmdata_pub_ = _n->advertise<sscrovers_pmslam_common::PMSlamData>(pub_output_data_topic_name_.c_str(), 10);
   //db_pub_ = _n->advertise<sscrovers_pmslam_common::DynamicArray>("output_db", 10);
   //map3d_pub__n->advertise<sscrovers_pmslam_common::PMSlamData>("map3d", 10);
+  marker_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
 
   step_ = -1;
 
@@ -116,19 +118,53 @@ void FtrCore::publishMap3D()
 
 void FtrCore::publishPMSlamData()
 {
+  visualization_msgs::MarkerArray markers;
+  visualization_msgs::Marker points;
+  points.type = visualization_msgs::Marker::CUBE;
+  points.color.r = 0.0f;
+  points.color.g = 1.0f;
+  points.color.b = 0.0f;
+  points.color.a = .05;
+  points.scale.x = .05;
+  points.scale.y = .05;
+  points.scale.z = .05;
+
+    points.header.frame_id = "/map";
+    points.header.stamp = ros::Time::now();
+
+    // Set the namespace and id for this marker.  This serves to create a unique ID
+    // Any marker sent with the same namespace and id will overwrite the old one
+    points.ns = "basic_shapes";
+    
+
+    // Set the marker action.  Options are ADD and DELETE
+    points.action = visualization_msgs::Marker::ADD;
+
+
   pmslam_data_msg_.header.stamp.nsec = step_;
   pmslam_data_msg_.map_out.resize(info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.x.size());
   for (unsigned int i = 0; i < pmslam_data_msg_.map_out.size(); i++)
   {
+    points.id = i;
+
     pmslam_data_msg_.map_out[i].pt.x = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.x[i];
     pmslam_data_msg_.map_out[i].pt.y = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.y[i];
     pmslam_data_msg_.map_out[i].pt.z = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.z[i];
     pmslam_data_msg_.map_out[i].id = info_filter_ptr_->PMSLAM_Data_msg.MapOut.ID[i];
+    points.pose.position.x = pmslam_data_msg_.map_out[i].pt.x;
+    points.pose.position.y = pmslam_data_msg_.map_out[i].pt.y;
+    points.pose.position.z = pmslam_data_msg_.map_out[i].pt.z;
+    points.pose.orientation.x = 0.0;
+    points.pose.orientation.y = 0.0;
+    points.pose.orientation.z = 0.0;
+    points.pose.orientation.w = 1.0;
+    markers.markers.push_back(points);
   }
   pmslam_data_msg_.trajectory_out.position.x = info_filter_ptr_->PMSLAM_Data_msg.TrajectoryOut.x;
   pmslam_data_msg_.trajectory_out.position.y = info_filter_ptr_->PMSLAM_Data_msg.TrajectoryOut.y;
   pmslam_data_msg_.trajectory_out.position.z = info_filter_ptr_->PMSLAM_Data_msg.TrajectoryOut.z;
   pmdata_pub_.publish(pmslam_data_msg_);
+  marker_pub.publish(markers);
 }
 
 void FtrCore::ctrlvecCallBack(const geometry_msgs::PoseStampedConstPtr& msg)

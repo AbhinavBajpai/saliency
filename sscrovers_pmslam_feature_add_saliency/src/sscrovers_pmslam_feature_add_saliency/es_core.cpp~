@@ -32,7 +32,6 @@ ESCore::~ESCore()
 }
 
 void ESCore::featuresCallback(const geometry_msgs::PoseArray& msg){
-
 	before = msg;
 	process();
 }

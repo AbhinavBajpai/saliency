@@ -119,6 +119,7 @@ private:
 
   ros::NodeHandle n;
 
+  ros::Publisher marker_pub;
 };
 
 #endif //FTR_CORE_H

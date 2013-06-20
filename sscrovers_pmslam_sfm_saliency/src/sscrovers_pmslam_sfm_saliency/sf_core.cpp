@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 
@@ -60,6 +61,8 @@ void SFCore::process()
 			}
 			//ROS_INFO("start fundamental matrix");
 			fundamentalMatrix(rearranged_n,rearranged_n1);
+			rearranged_n.extras.clear();
+			rearranged_n1.extras.clear();
 			prev = now;
 		}
 
@@ -69,6 +72,8 @@ void SFCore::process()
 
 void SFCore::fundamentalMatrix(sscrovers_pmslam_common::extraFeatures& n, sscrovers_pmslam_common::extraFeatures& n1){
 	std::vector<cv::Point2f> points1, points2;
+	points1.clear();
+	points2.clear();
 	for(int i=0;i<n.extras.size();i++){
 		points1.push_back(cv::Point2f(n.extras[i].extraPoints[0].x,n.extras[i].extraPoints[0].y));
 		points2.push_back(cv::Point2f(n1.extras[i].extraPoints[0].x,n1.extras[i].extraPoints[0].y));
@@ -89,8 +94,25 @@ void SFCore::fundamentalMatrix(sscrovers_pmslam_common::extraFeatures& n, sscrov
 		points2.push_back(cv::Point2f(n1.extras[i].extraPoints[5].x,n1.extras[i].extraPoints[5].y));
 
 	}
+	
+	//test
+	cv::Mat cmN = cv::Mat::zeros(240,640, CV_8UC1);
+	for(int w=0;w<points1.size();w++){
 
-	cv::Mat fundamental_matrix = cv::findFundamentalMat(points1, points2, cv::FM_RANSAC, 2, 0.9);
+		std::string s = boost::lexical_cast<string>(w);
+		cv::Point p1(points1[w].x,points1[w].y);
+		//cv::putText(cmN,s,p1, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255));
+		cv::Point p2(points2[w].x+320,points2[w].y);
+		//cv::putText(cmN,s,p2, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255));
+		cv::line(cmN, p1, p2, cv::Scalar(255));
+	}
+
+	cv::imshow("asd", cmN);
+	
+	cv::waitKey(3);
+
+
+	cv::Mat fundamental_matrix = cv::findFundamentalMat(points1, points2, cv::FM_LMEDS, 1, 0.99);
 
 	cv::Mat K =  cv::Mat::ones(3, 3, CV_64F);
 	K.at<double>(0,0) = 757.023586;
@@ -102,8 +124,6 @@ void SFCore::fundamentalMatrix(sscrovers_pmslam_common::extraFeatures& n, sscrov
 	K.at<double>(2,0) = 0;
 	K.at<double>(2,1) = 0;
 	K.at<double>(2,2) = 1;
-
-	cv::Mat Kt = K.t();
 	
 	cv::Mat E = /*K.t() */ fundamental_matrix /* K*/;
 
@@ -116,6 +136,7 @@ void SFCore::fundamentalMatrix(sscrovers_pmslam_common::extraFeatures& n, sscrov
 	0,0,1);
 	cv::Mat R = svd.u * cv::Mat(W) * svd.vt; 
 	cv::Mat t = svd.u.col(2); 
+
 
 	ROS_INFO("t = %f %f %f", t.at<double>(0,0), t.at<double>(0,1), t.at<double>(0,2));
 }

@@ -51,8 +51,8 @@ void ESCore::process()
 		sscrovers_pmslam_common::extraFeature tempExtra;
 		float x = before.poses[i].orientation.x;
 		float y = before.poses[i].orientation.y;
-		float w = before.poses[i].orientation.w;
-		float h = before.poses[i].orientation.z;
+		float w = 6;//before.poses[i].orientation.w;
+		float h = 6;//before.poses[i].orientation.z;
 		
 
 		//convert to extraFeature

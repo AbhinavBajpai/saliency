@@ -117,6 +117,8 @@ private:
 
   std::vector <sscrovers_pmslam_common::SPoint> sal_db;
 
+  ros::NodeHandle n;
+
 };
 
 #endif //FTR_CORE_H
