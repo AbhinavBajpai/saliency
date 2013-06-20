@@ -95,28 +95,12 @@ void FtrCore::process()
   }
   delete _u;
 
-  //publishMap3D();
+  publishMap3D();
   publishPMSlamData();
   //publishDB();
 }
 
 void FtrCore::publishMap3D()
-{
-  map3d_msg_.header.stamp.nsec = step_;
-  map3d_msg_.landmarks.resize(info_filter_ptr_->map3d_ptr_->map.size());
-  for (unsigned int i = 0; i < map3d_msg_.landmarks.size(); i++)
-  {
-    map3d_msg_.landmarks[i].index = info_filter_ptr_->map3d_ptr_->map[i].index;
-    map3d_msg_.landmarks[i].matpos = info_filter_ptr_->map3d_ptr_->map[i].matPos;
-    map3d_msg_.landmarks[i].position.x = info_filter_ptr_->map3d_ptr_->map[i].position.x;
-    map3d_msg_.landmarks[i].position.y = info_filter_ptr_->map3d_ptr_->map[i].position.y;
-    map3d_msg_.landmarks[i].position.z = info_filter_ptr_->map3d_ptr_->map[i].position.z;
-    map3d_msg_.landmarks[i].stddev = info_filter_ptr_->map3d_ptr_->map[i].stddev;
-  }
-  map3d_pub_.publish(map3d_msg_);
-}
-
-void FtrCore::publishPMSlamData()
 {
   visualization_msgs::MarkerArray markers;
   visualization_msgs::Marker points;
@@ -128,43 +112,54 @@ void FtrCore::publishPMSlamData()
   points.scale.x = .05;
   points.scale.y = .05;
   points.scale.z = .05;
-
-    points.header.frame_id = "/map";
-    points.header.stamp = ros::Time::now();
-
-    // Set the namespace and id for this marker.  This serves to create a unique ID
-    // Any marker sent with the same namespace and id will overwrite the old one
-    points.ns = "basic_shapes";
-    
-
-    // Set the marker action.  Options are ADD and DELETE
-    points.action = visualization_msgs::Marker::ADD;
-
-
-  pmslam_data_msg_.header.stamp.nsec = step_;
-  pmslam_data_msg_.map_out.resize(info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.x.size());
-  for (unsigned int i = 0; i < pmslam_data_msg_.map_out.size(); i++)
+  points.header.frame_id = "/map";
+  points.header.stamp = ros::Time::now();
+  points.ns = "basic_shapes";
+  points.action = visualization_msgs::Marker::ADD;
+  //map3d_msg_.header.stamp.nsec = step_;
+  //map3d_msg_.landmarks.resize(info_filter_ptr_->map3d_ptr_->map.size());
+  for (unsigned int i = 0; i < info_filter_ptr_->map3d_ptr_->map.size(); i++)
   {
-    points.id = i;
-
-    pmslam_data_msg_.map_out[i].pt.x = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.x[i];
-    pmslam_data_msg_.map_out[i].pt.y = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.y[i];
-    pmslam_data_msg_.map_out[i].pt.z = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.z[i];
-    pmslam_data_msg_.map_out[i].id = info_filter_ptr_->PMSLAM_Data_msg.MapOut.ID[i];
-    points.pose.position.x = pmslam_data_msg_.map_out[i].pt.x;
-    points.pose.position.y = pmslam_data_msg_.map_out[i].pt.y;
-    points.pose.position.z = pmslam_data_msg_.map_out[i].pt.z;
+    /*map3d_msg_.landmarks[i].index = info_filter_ptr_->map3d_ptr_->map[i].index;
+    map3d_msg_.landmarks[i].matpos = info_filter_ptr_->map3d_ptr_->map[i].matPos;
+    map3d_msg_.landmarks[i].position.x = info_filter_ptr_->map3d_ptr_->map[i].position.x;
+    map3d_msg_.landmarks[i].position.y = info_filter_ptr_->map3d_ptr_->map[i].position.y;
+    map3d_msg_.landmarks[i].position.z = info_filter_ptr_->map3d_ptr_->map[i].position.z;
+    map3d_msg_.landmarks[i].stddev = info_filter_ptr_->map3d_ptr_->map[i].stddev;*/
+    points.id = info_filter_ptr_->map3d_ptr_->map[i].index;
+    points.pose.position.x = info_filter_ptr_->map3d_ptr_->map[i].position.x;
+    points.pose.position.y = info_filter_ptr_->map3d_ptr_->map[i].position.y;
+    points.pose.position.z = info_filter_ptr_->map3d_ptr_->map[i].position.z;
     points.pose.orientation.x = 0.0;
     points.pose.orientation.y = 0.0;
     points.pose.orientation.z = 0.0;
     points.pose.orientation.w = 1.0;
     markers.markers.push_back(points);
   }
+  //map3d_pub_.publish(map3d_msg_);
+  marker_pub.publish(markers);
+}
+
+void FtrCore::publishPMSlamData()
+{
+
+
+  pmslam_data_msg_.header.stamp.nsec = step_;
+  pmslam_data_msg_.map_out.resize(info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.x.size());
+  for (unsigned int i = 0; i < pmslam_data_msg_.map_out.size(); i++)
+  {
+
+
+    pmslam_data_msg_.map_out[i].pt.x = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.x[i];
+    pmslam_data_msg_.map_out[i].pt.y = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.y[i];
+    pmslam_data_msg_.map_out[i].pt.z = info_filter_ptr_->PMSLAM_Data_msg.MapOut.positions.z[i];
+    pmslam_data_msg_.map_out[i].id = info_filter_ptr_->PMSLAM_Data_msg.MapOut.ID[i];
+    
+  }
   pmslam_data_msg_.trajectory_out.position.x = info_filter_ptr_->PMSLAM_Data_msg.TrajectoryOut.x;
   pmslam_data_msg_.trajectory_out.position.y = info_filter_ptr_->PMSLAM_Data_msg.TrajectoryOut.y;
   pmslam_data_msg_.trajectory_out.position.z = info_filter_ptr_->PMSLAM_Data_msg.TrajectoryOut.z;
   pmdata_pub_.publish(pmslam_data_msg_);
-  marker_pub.publish(markers);
 }
 
 void FtrCore::ctrlvecCallBack(const geometry_msgs::PoseStampedConstPtr& msg)
