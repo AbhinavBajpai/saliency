@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>sscrovers_pmslam_outlier_rejection</name>
-  <version>0.0.0</version>
+  <version>0.2.0</version>
   <description>The sscrovers_pmslam_outlier_rejection package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

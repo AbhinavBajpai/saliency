@@ -4,7 +4,7 @@ project(sscrovers_pmslam_filter)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf dynamic)
+find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscp
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES sscrovers_pmslam_filter
-   CATKIN_DEPENDS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf dynamic
+   CATKIN_DEPENDS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf
 #  DEPENDS system_lib
 )
 
@@ -89,16 +89,7 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/SURFPoint.cpp
  )
 
- add_executable(ftr_node_dy
-	src/${PROJECT_NAME}/ftr_core_dy.cpp
-	src/${PROJECT_NAME}/information_filter_ftr.cpp
-	src/${PROJECT_NAME}/EIF.cpp
-			src/${PROJECT_NAME}/RoverState.cpp
-			src/${PROJECT_NAME}/Landmark.cpp
-			src/${PROJECT_NAME}/Map.cpp
-	src/${PROJECT_NAME}/features_db.cpp
-	src/${PROJECT_NAME}/SURFPoint.cpp
- )
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -109,9 +100,6 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
    ${catkin_LIBRARIES}
  )
 
- target_link_libraries(ftr_node_dy
-   ${catkin_LIBRARIES}
- )
 
 #############
 ## Install ##

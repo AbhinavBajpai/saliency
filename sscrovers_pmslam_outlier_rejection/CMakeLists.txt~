@@ -75,9 +75,20 @@ include_directories(include
 #   src/${PROJECT_NAME}/sscrovers_pmslam_outlier_rejection.cpp
 # )
 
+set (CMAKE_CXX_FLAGS "-std=c++0x")
+
 ## Declare a cpp executable
  add_executable(or_node
 	src/${PROJECT_NAME}/or_core.cpp
+	src/${PROJECT_NAME}/filter_keypoints_or.cpp
+	src/${PROJECT_NAME}/RoverState.cpp
+	src/${PROJECT_NAME}/surf.cpp
+	src/${PROJECT_NAME}/SURFPoint.cpp
+	src/${PROJECT_NAME}/features_db.cpp
+)
+
+ add_executable(or_node_dy
+	src/${PROJECT_NAME}/or_core_dy.cpp
 	src/${PROJECT_NAME}/filter_keypoints_or.cpp
 	src/${PROJECT_NAME}/RoverState.cpp
 	src/${PROJECT_NAME}/surf.cpp
@@ -91,6 +102,10 @@ include_directories(include
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(or_node
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(or_node_dy
    ${catkin_LIBRARIES}
  )
 

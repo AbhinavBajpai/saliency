@@ -4,7 +4,7 @@ project(sscrovers_pmslam_feature_detection)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport roscpp sensor_msgs sscrovers_pmslam_common std_msgs dynamic)
+find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport roscpp sensor_msgs sscrovers_pmslam_common std_msgs )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport roscpp sensor_
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES sscrovers_pmslam_feature_detection
-  CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs sscrovers_pmslam_common std_msgs dynamic
+  CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs sscrovers_pmslam_common std_msgs
 #  DEPENDS system_lib
 )
 
@@ -80,10 +80,7 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/surf_fd.cpp
  )
 
- add_executable(fd_node_dy
-	src/${PROJECT_NAME}/fd_core_dy.cpp
-	src/${PROJECT_NAME}/surf_fd.cpp
- )
+
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -94,9 +91,6 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
    ${catkin_LIBRARIES}
  )
 
- target_link_libraries(fd_node_dy
-   ${catkin_LIBRARIES}
- )
 
 #############
 ## Install ##

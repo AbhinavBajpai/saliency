@@ -73,7 +73,7 @@ include_directories(include
 # add_library(sscrovers_pmslam_feature_detection
 #   src/${PROJECT_NAME}/sscrovers_pmslam_feature_detection.cpp
 # )
-#set (CMAKE_CXX_FLAGS "-std=c++0x")
+set (CMAKE_CXX_FLAGS "-std=c++0x")
 ## Declare a cpp executable
  add_executable(fd_node
 	src/${PROJECT_NAME}/fd_core.cpp

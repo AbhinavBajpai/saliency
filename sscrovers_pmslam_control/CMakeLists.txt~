@@ -85,10 +85,6 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/ctrl_core.cpp
  )
 
- add_executable(ctrl_nodedy
-	src/${PROJECT_NAME}/ctrl_coredy.cpp
- )
-
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(sscrovers_pmslam_control_node sscrovers_pmslam_control_generate_messages_cpp)
@@ -98,9 +94,7 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
    ${catkin_LIBRARIES}
  )
 
-target_link_libraries(ctrl_nodedy
-   ${catkin_LIBRARIES}
- )
+
 #############
 ## Install ##
 #############
@@ -123,11 +117,11 @@ target_link_libraries(ctrl_nodedy
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+ install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".svn" EXCLUDE
+ )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

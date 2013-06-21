@@ -85,8 +85,6 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 			src/${PROJECT_NAME}/RoverState.cpp
 			src/${PROJECT_NAME}/Landmark.cpp
 			src/${PROJECT_NAME}/Map.cpp
-	src/${PROJECT_NAME}/features_db.cpp
-	src/${PROJECT_NAME}/SURFPoint.cpp
  )
 
 

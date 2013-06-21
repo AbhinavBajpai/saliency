@@ -4,7 +4,7 @@ project(sscrovers_pmslam_control)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common std_msgs tf dynamic)
+find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common std_msgs tf)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscp
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES sscrovers_pmslam_control
-   CATKIN_DEPENDS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common std_msgs tf dynamic
+   CATKIN_DEPENDS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -85,10 +85,6 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/ctrl_core.cpp
  )
 
- add_executable(ctrl_nodedy
-	src/${PROJECT_NAME}/ctrl_coredy.cpp
- )
-
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(sscrovers_pmslam_control_node sscrovers_pmslam_control_generate_messages_cpp)
@@ -98,9 +94,7 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
    ${catkin_LIBRARIES}
  )
 
-target_link_libraries(ctrl_nodedy
-   ${catkin_LIBRARIES}
- )
+
 #############
 ## Install ##
 #############

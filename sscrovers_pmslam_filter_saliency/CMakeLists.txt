@@ -4,7 +4,7 @@ project(sscrovers_pmslam_filter_saliency)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf dynamic)
+find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport nav_msgs roscp
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES sscrovers_pmslam_filter
-   CATKIN_DEPENDS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf dynamic
+   CATKIN_DEPENDS cv_bridge image_transport nav_msgs roscpp sscrovers_pmslam_common tf
 #  DEPENDS system_lib
 )
 
