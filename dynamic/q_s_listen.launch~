@@ -1,3 +1,0 @@
-<launch>
-	<node pkg="dynamic" name="listen" type="listen" ns="ont" />
-</launch>

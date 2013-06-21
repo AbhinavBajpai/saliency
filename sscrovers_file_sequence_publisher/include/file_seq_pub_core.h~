@@ -71,6 +71,8 @@ public:
   //! names for topics
   std::string pub_image_topic_name_, pub_odom_topic_name_;
 
+  int start_no_;
+
   //! absolute paths for images and trajectory file (default in: {sequence_publisher_path}/input)
   std::string path_to_images_, path_to_poses_;
 

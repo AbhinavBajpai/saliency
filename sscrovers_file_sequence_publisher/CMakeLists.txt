@@ -4,7 +4,7 @@ project(sscrovers_file_sequence_publisher)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cv_bridge geometry_msgs image_transport nav_msgs roscpp std_msgs tf dynamic)
+find_package(catkin REQUIRED COMPONENTS cv_bridge geometry_msgs image_transport nav_msgs roscpp std_msgs tf )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS cv_bridge geometry_msgs image_transport 
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES sscrovers_file_sequence_publisher
-  CATKIN_DEPENDS cv_bridge geometry_msgs image_transport nav_msgs roscpp std_msgs tf dynamic
+  CATKIN_DEPENDS cv_bridge geometry_msgs image_transport nav_msgs roscpp std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -80,9 +80,9 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/file_seq_pub_core.cpp
  )
 
- add_executable(file_seq_pub_node_dy
-	src/${PROJECT_NAME}/file_seq_pub_coredy.cpp
- )
+ #add_executable(file_seq_pub_node_dy
+#	src/${PROJECT_NAME}/file_seq_pub_coredy.cpp
+ #)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -93,9 +93,9 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
    ${catkin_LIBRARIES}
  )
 
- target_link_libraries(file_seq_pub_node_dy
-   ${catkin_LIBRARIES}
- )
+ #target_link_libraries(file_seq_pub_node_dy
+   #${catkin_LIBRARIES}
+ #)#
 
 #############
 ## Install ##

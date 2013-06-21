@@ -80,12 +80,20 @@ set (CMAKE_CXX_FLAGS "-std=c++0x")
 	src/${PROJECT_NAME}/file_seq_pub_core.cpp
  )
 
+ add_executable(file_seq_pub_node_dy
+	src/${PROJECT_NAME}/file_seq_pub_coredy.cpp
+ )
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(sscrovers_file_sequence_publisher_node sscrovers_file_sequence_publisher_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(file_seq_pub_node
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(file_seq_pub_node_dy
    ${catkin_LIBRARIES}
  )
 

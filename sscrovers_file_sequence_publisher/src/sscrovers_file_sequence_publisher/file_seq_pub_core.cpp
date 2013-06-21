@@ -8,7 +8,7 @@
  */
 
 #include "file_seq_pub_core.h"
-#include "dynamic/rosdyp.h"
+//#include "dynamic/rosdyp.h"
 
 FileSeqPubCore::FileSeqPubCore(ros::NodeHandle *_n) :
     it_(*_n)

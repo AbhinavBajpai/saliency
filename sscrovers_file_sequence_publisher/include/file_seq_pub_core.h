@@ -38,7 +38,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 
-#include "dynamic/rosdy.h"
+//#include "dynamic/rosdy.h"
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -121,8 +121,8 @@ public:
   void publishOdom();
 
   //dp
-  dyPublisher<sensor_msgs::Image> image_dp;
-  dyPublisher<nav_msgs::Odometry> odom_dp;
+  //dyPublisher<sensor_msgs::Image> image_dp;
+  //dyPublisher<nav_msgs::Odometry> odom_dp;
 };
 
 #endif /* PANGU_SEQ_PUB_CORE_H_ */
